@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+
+@theme {
+  /* Brand */
+  --color-brand: #65361d;          /* primary brown (buttons) */
+  --color-brand-dark: #442414;     /* primary hover */
+  --color-accent: #63b50b;         /* green, used for verification actions */
+  --color-accent-dark: #569f0b;    /* accent hover */
+  --color-accent-deep: #366706;    /* focus ring, dark green text */
+  --color-soft: #ffe8d7;           /* soft apricot button */
+  --color-soft-dark: #fecea9;      /* soft hover */
+
+  /* Surfaces */
+  --color-page: #fff9f6;           /* app page background */
+  --color-cream: #fef5f0;          /* hover fills */
+  --color-sand: #f4eae7;           /* disabled fills */
+  --color-line: #f3d6bf;           /* card borders */
+  --color-line-strong: #d9cfc9;    /* disabled borders */
+  --color-banner: #effce7;         /* green verification banner */
+
+  /* Text */
+  --color-ink: #26160e;            /* headings and body */
+  --color-ink-muted: #4e3e36;      /* secondary text */
+
+  /* Status badges: background and text */
+  --color-verified-bg: #d7f9c4;    --color-verified-text: #284d03;
+  --color-confirmed-bg: #dfedff;   --color-confirmed-text: #004284;
+  --color-pending-bg: #fee7cd;     --color-pending-text: #5e3b07;
+  --color-changes-bg: #ffe4e0;     --color-changes-text: #820705;
+  --color-self-bg: #f4eae7;        --color-self-text: #4e3e36;
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
