@@ -36,5 +36,7 @@
   --color-accent-soft: #d9f1c8;    /* soft green glow around a focused field */
   --color-error: #cf0f0a;          /* error border, icon and message */
 
+  --color-accent-light: #d7f9c4;   /* active nav item */
+
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 }
