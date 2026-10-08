@@ -30,5 +30,11 @@
   --color-changes-bg: #ffe4e0;     --color-changes-text: #820705;
   --color-self-bg: #f4eae7;        --color-self-text: #4e3e36;
 
+  /* Input component */
+  --color-field-border: #d6c5b7;   /* default input border */
+  --color-placeholder: #8a807a;    /* placeholder text */
+  --color-accent-soft: #d9f1c8;    /* soft green glow around a focused field */
+  --color-error: #cf0f0a;          /* error border, icon and message */
+
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 }
