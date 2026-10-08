@@ -38,5 +38,9 @@
 
   --color-accent-light: #d7f9c4;   /* active nav item */
 
+  --color-sage-bg: #e6f2d9;     --color-sage-text: #3a4828;
+  --color-plum-bg: #f8e3fe;     --color-plum-text: #763b88;
+  --color-banner-line: #b6ec97; /* border and progress track of the green banner */
+
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 }
