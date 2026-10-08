@@ -52,7 +52,6 @@ jobs:
           ECR_URI: public.ecr.aws/n6l0u0t6/skillcredfe
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          $ECR_URI:$IMAGE_TAG -t $ECR_URI:latest .
           docker build -t $ECR_URI:$IMAGE_TAG -t $ECR_URI:latest .
           docker push $ECR_URI:$IMAGE_TAG
           docker push $ECR_URI:latest
