@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes,  Navigate} from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import TrustedLogos from "./components/TrustedLogos";
@@ -11,6 +11,11 @@ import LoginPage from "./components/pages/LoginPage";
 import SignupPage from "./components/pages/SignupPage";
 import UserTypePage from "./components/pages/UserTypePage";
 import InstitutionSignupPage from "./components/pages/InstitutionSignupPage";
+import AppLayout from './components/layout/AppLayout'
+import DashboardPage from './features/dashboard/DashboardPage'
+
+const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>
+
 
 export default function App() {
   return (
@@ -36,6 +41,20 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/user-type" element={<UserTypePage />} />
       <Route path="/institution-signup" element={<InstitutionSignupPage />} />
+
+
+      <Route path="/app" element={<AppLayout />}>
+  <Route index element={<Navigate to="dashboard" replace />} />
+  <Route path="dashboard" element={<DashboardPage />} />
+  <Route path="projects" element={stub('Projects')} />
+  <Route path="certifications" element={stub('Certifications')} />
+  <Route path="skills" element={stub('Skills')} />
+  <Route path="achievements" element={stub('Achievements')} />
+  <Route path="verification" element={stub('Verification')} />
+  <Route path="share" element={stub('Share profile')} />
+  <Route path="settings" element={stub('Settings')} />
+  <Route path="profile" element={stub('Profile')} />
+</Route>
     </Routes>
   );
 }
