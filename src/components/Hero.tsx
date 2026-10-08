@@ -11,7 +11,7 @@ export default function Hero() {
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 md:grid-cols-2 md:py-24">
           <div className="relative z-10">
-           <span className="relative -top-10 inline-block rounded-full border border-[#E5F0D8] bg-white px-6 py-1 text-xs text-[#2B1A10] shadow-sm">
+           <span className="relative -top-4 inline-block rounded-full border border-[#E5F0D8] bg-white px-6 py-1 text-xs text-[#2B1A10] shadow-sm">
               Build{" "}
               <span className="text-[#8FB85A]">•</span> Verify{" "}
               <span className="text-[#8FB85A]">•</span> Grow
