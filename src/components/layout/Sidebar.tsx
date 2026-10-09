@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { Award, Code, Folder, House, LogOut, PanelLeft, ShieldCheck, Share2, SlidersHorizontal, Star } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import NavItem from './NavItem'
 import { mockCounts, mockUser } from '../../lib/mockData'
+import LogoutModal from './LogoutModal'
 
 type SidebarProps = { collapsed: boolean; onToggle: () => void }
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const [loggingOut, setLoggingOut] = useState(false)
   return (
     <aside
       className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-line bg-white p-3 transition-[width] md:flex ${
@@ -41,7 +44,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <NavItem to="/app/settings" icon={SlidersHorizontal} label="Settings" collapsed={collapsed} />
         <button
           type="button"
-          // TODO: open the "Log out of SkillCred?" confirmation modal, then clear the session
+
+          onClick={() => setLoggingOut(true)}
           className={`flex h-10 items-center gap-3 rounded-lg text-sm text-ink-muted hover:bg-cream ${
             collapsed ? 'justify-center' : 'px-3'
           }`}
@@ -60,6 +64,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           )}
         </div>
       </div>
+      {loggingOut && <LogoutModal onClose={() => setLoggingOut(false)} />}
     </aside>
   )
 }

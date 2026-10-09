@@ -15,6 +15,9 @@ import AppLayout from './components/layout/AppLayout'
 import DashboardPage from './features/dashboard/DashboardPage'
 import ProjectsPage from './features/projects/ProjectsPage'
 import OnboardingPage from './features/onboarding/OnboardingPage'
+import RequireAuth from './app/RequireAuth'
+import ProfilePage from './features/profile/ProfilePage'
+
 
 const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>
 
@@ -44,7 +47,7 @@ export default function App() {
       <Route path="/user-type" element={<UserTypePage />} />
       <Route path="/institution-signup" element={<InstitutionSignupPage />} />
 
-
+<Route element={<RequireAuth />}>
       <Route path="/app" element={<AppLayout />}>
   <Route index element={<Navigate to="dashboard" replace />} />
   <Route path="dashboard" element={<DashboardPage />} />
@@ -58,6 +61,7 @@ export default function App() {
   <Route path="profile" element={stub('Profile')} />
 </Route>
   <Route path="/onboarding" element={<OnboardingPage />} />
-    </Routes>
+    </Route>
+       </Routes>
   );
 }
