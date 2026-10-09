@@ -1,10 +1,11 @@
 // Local UI test fixture only. Run explicitly; never imported by the application.
 import http from 'node:http'
 const user = { id: 'fixture-user', fullName: 'Test Learner', email: 'learner@example.test', role: 'learner', emailVerified: true, needsInstitution: false }
+let profile = null
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS')
   res.setHeader('Content-Type', 'application/json')
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
   let raw = ''
@@ -12,6 +13,18 @@ const server = http.createServer(async (req, res) => {
   const body = raw ? JSON.parse(raw) : {}
   const path = req.url.split('?')[0]
   function send(status, response) { res.writeHead(status); res.end(JSON.stringify(response)) }
+  if (path.startsWith('/api/learner/')) {
+    if (req.headers.authorization !== 'Bearer local-ui-fixture-token') { send(401, { message: 'Login required' }); return }
+    if (path === '/api/learner/handle-available') {
+      const handle = new URL(req.url, 'http://localhost').searchParams.get('handle')
+      send(200, { available: handle !== 'taken' && handle !== profile?.handle }); return
+    }
+    if (path === '/api/learner/profile' && req.method === 'GET') { send(200, { profile }); return }
+    if (path === '/api/learner/profile' && req.method === 'PATCH') {
+      if (body.handle === 'race-taken') { send(409, { message: 'Handle taken', fields: ['handle'] }); return }
+      profile = { ...profile, handle: body.handle }; send(200, { profile }); return
+    }
+  }
   if (path === '/api/auth/me') { if (req.headers.authorization !== 'Bearer local-ui-fixture-token') { send(503, { message: 'Local test fixture: real accounts are not supported.' }); return } send(200, { user }); return }
   if (body.email && !body.email.endsWith('@example.test')) { send(503, { message: 'Local test fixture: real accounts are not supported.' }); return }
   // Delay exposes the Figma submitting state without production-only delays.

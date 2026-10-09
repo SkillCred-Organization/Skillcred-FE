@@ -1,3 +1,4 @@
+import { learnerProfileApi, profileUrl, suggestedProfileHandle } from '../src/lib/profile.ts'
 import assert from 'node:assert/strict'
 import { test, beforeEach, afterEach } from 'node:test'
 import { apiClient, apiUrl, ApiError, AUTH_TOKEN_KEY, AUTH_USER_KEY, SESSION_EXPIRED_EVENT, tokenStore } from '../src/lib/apiClient.ts'
@@ -151,4 +152,38 @@ test('incomplete sessions cannot replace the signed-in account', () => {
   assert.throws(() => saveSession({ token: 'bad', user: { role: 'learner' } }), ApiError)
   assert.equal(storage.get(AUTH_TOKEN_KEY), session.token)
   assert.deepEqual(readStoredUser(), session.user)
+})
+test('profile lookup uses the authenticated learner endpoint and supports a missing profile', async () => {
+  saveSession(session)
+  respond({ profile: null })
+  assert.equal((await learnerProfileApi.get()).profile, null)
+  assert.equal(requests[0].url, 'http://localhost:4000/api/learner/profile')
+  assert.equal(requests[0].headers.get('Authorization'), 'Bearer test-session')
+})
+
+test('profile URLs use the saved handle and never invent a link for an unset profile', () => {
+  assert.equal(profileUrl({ handle: 'munachi-david-2' }), 'https://skillcred.app/u/munachi-david-2')
+  for (const profile of [undefined, null, {}, { handle: '' }, { handle: '  ' }]) assert.equal(profileUrl(profile), null)
+  assert.equal(profileUrl({ handle: 'name/other?query' }), 'https://skillcred.app/u/name%2Fother%3Fquery')
+  assert.equal(suggestedProfileHandle('  Munachi David  '), 'munachi-david')
+})
+
+test('handle availability is encoded and saving changes only the handle field', async () => {
+  saveSession(session)
+  respond({ available: true })
+  await learnerProfileApi.handleAvailable('name & other')
+  assert.equal(requests[0].url, 'http://localhost:4000/api/learner/handle-available?handle=name%20%26%20other')
+  assert.equal(requests[0].headers.get('Authorization'), 'Bearer test-session')
+  respond({ profile: { handle: 'munachi-david' } })
+  const saved = await learnerProfileApi.saveHandle('munachi-david')
+  assert.equal(requests[1].method, 'PATCH')
+  assert.deepEqual(JSON.parse(requests[1].body), { handle: 'munachi-david' })
+  assert.equal(profileUrl(saved.profile), 'https://skillcred.app/u/munachi-david')
+})
+
+test('a taken profile handle preserves the signed-in session and the server error', async () => {
+  saveSession(session)
+  respond({ message: 'Handle taken', fields: ['handle'] }, 409)
+  await assert.rejects(learnerProfileApi.saveHandle('taken'), error => error instanceof ApiError && error.status === 409)
+  assert.equal(readStoredUser().id, session.user.id)
 })

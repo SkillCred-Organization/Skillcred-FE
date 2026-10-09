@@ -4,9 +4,9 @@ The desktop and mobile HF-02 through HF-04 screens use the locally bundled DM Sa
 
 ## Run locally
 
-1. The ignored `.env.local` has been created with the documented local API address. For another checkout, copy `.env.example` to `.env.local`.
-2. Set `VITE_API_URL` to the backend origin. The integration guide uses `http://localhost:4000` locally; it is also the development fallback.
-3. Set `VITE_GOOGLE_CLIENT_ID` to the Google OAuth web client ID. Register the frontend origin (including its port) in Google Cloud.
+1. The ignored `.env.local` is configured with the supplied Render API address and public Google web client ID. For another checkout, copy `.env.example` to `.env.local`.
+2. Set `VITE_API_URL` to `https://skillcred-backend-fc5i.onrender.com`, or to `http://localhost:4000` when running a local backend. The latter remains the development fallback.
+3. The public `VITE_GOOGLE_CLIENT_ID` is included in `.env.example`. Register the frontend origin (including its port) in Google Cloud. Never put a Google client secret in frontend files or `VITE_*` variables.
 4. Run `npm install`, then `npm run dev`. Restart Vite after changing environment variables.
 5. Run `npm run build`, `npm run lint`, and `npm run test:auth` before merging.
 
@@ -57,5 +57,15 @@ The dashboard, projects, onboarding, and their shared components from origin/mai
 - Passed all 15 authentication contract tests, TypeScript build checks, full ESLint, and the Vite production build. Production bundling used RAYON_NUM_THREADS=1 and a 384 MB Node heap to accommodate this computer's memory limits.
 - Browser checks used synthetic @example.test accounts on a separate frontend (port 3001) and temporary API fixture (port 4001). Verified unchecked/checked consent, signup to onboarding, the onboarding Back button and completion, response names in onboarding/sidebar/dashboard, session restoration, project draft creation, logout, failed login, and login to the dashboard.
 - Verified landing profile-card spacing, signup, and dashboard at a 375px mobile viewport with no horizontal overflow. Closed temporary browser tabs and stopped both test servers afterward.
-- These checks do not verify the live backend or Google sign-in. The documented backend addresses remain unavailable; upstream project storage and onboarding save still use mocks.
-- .env.local remains ignored and unchanged.
+- These checks do not verify the live backend or Google sign-in. Those original checks used a fixture; the supplied Render backend was subsequently verified as described below. Upstream project storage and onboarding save still use mocks.
+- .env.local remained ignored during the partner integration.
+
+## Live backend and profile handles (2026-10-09)
+
+- The supplied Render API responds to login and registration validation requests, and permits localhost:3000 through CORS. GET /api/auth/me without a token correctly returns 401. A synthetic invalid login in the real browser reached the API and showed a credentials error rather than a connection error; the user subsequently signed into their real learner account.
+- `.env.example` now contains the supplied API origin and public Google web client ID so other checkouts can use the same settings. Production builds must receive these VITE variables too; `.env.local` is intentionally not committed. Google sign-in still requires correct authorized origins and an end-to-end sign-in check.
+- The dashboard profile-link card reads GET /api/learner/profile through the authenticated API client. It uses the saved profile.handle for both the displayed address and copied URL; no demo name or unsaved name-derived URL is used.
+- If the profile has no handle, the card suggests a handle from the signed-in name. Saving is an explicit user action: it checks GET /api/learner/handle-available, then PATCHes only { handle } to /api/learner/profile and reloads the saved value. Taken handles, server validation errors, loading, retry, and clipboard failures are handled.
+- Public addresses retain the existing skillcred.app/u/:handle format. This frontend repository does not yet implement the public /u/:handle page, so displaying/saving an address does not confirm that public sharing is deployed.
+
+- Follow-up validation passed: all 19 authentication/profile contract tests, TypeScript, full ESLint, and the production build. Browser checks against the isolated fixture verified the missing-profile suggestion, unavailable handles, a conflict during saving, successful saving, persistence after reload, and copying the saved URL. The real account handle was not changed during testing.

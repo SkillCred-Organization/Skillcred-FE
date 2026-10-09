@@ -1,11 +1,11 @@
-import { useState } from 'react'
 import { useAuth } from '../auth/authContext'
-import { Award, Bell, Check, Copy, GraduationCap, Folder, Pencil, Plus, ShieldCheck, Star, TriangleAlert, Users } from 'lucide-react'
+import { Award, Bell, GraduationCap, Folder, Pencil, Plus, ShieldCheck, Star, TriangleAlert, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import StatCard from '../../components/ui/StatCard'
 import VerificationBanner from './VerificationBanner'
-import { mockActivity, mockProfileLink, mockStats, mockVerification } from '../../lib/mockData'
+import ProfileLinkCard from './ProfileLinkCard'
+import { mockActivity, mockStats, mockVerification } from '../../lib/mockData'
 import type { Activity } from '../../types'
 
 const activityStyle: Record<Activity['kind'], { icon: LucideIcon; style: string }> = {
@@ -30,15 +30,9 @@ function greeting() {
 }
 
 export default function DashboardPage() {
-  const [copied, setCopied] = useState(false)
   const { user } = useAuth()
   const firstName = user?.fullName?.trim().split(/\s+/)[0] || 'there'
 
-  async function copyLink() {
-    await navigator.clipboard.writeText(`https://${mockProfileLink}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -96,21 +90,7 @@ export default function DashboardPage() {
           </ul>
         </section>
 
-        <section className="rounded-xl border border-line bg-white p-4">
-          <h2 className="mb-1 text-base font-semibold text-ink">Your profile link</h2>
-          <p className="mb-3 text-sm text-ink-muted">
-            Send this with job applications. Employers see what {mockVerification.institution} has verified.
-          </p>
-          <input
-            readOnly
-            value={mockProfileLink}
-            aria-label="Your profile link"
-            className="mb-3 h-10 w-full rounded-lg border border-field-border bg-white px-3 text-sm text-ink"
-          />
-          <Button size="sm" onClick={copyLink} icon={copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}>
-            {copied ? 'Copied' : 'Copy link'}
-          </Button>
-        </section>
+        {user?.role === 'learner' && <ProfileLinkCard key={user.id} fullName={user.fullName} />}
       </div>
     </div>
   )
