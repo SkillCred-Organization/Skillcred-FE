@@ -7,6 +7,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { getProjects } from '../../lib/api'
 import type { Project, Status } from '../../types'
 import ProjectRow from './ProjectRow'
+import AddProjectModal from './AddProjectModal'
 
 type Filter = 'all' | Status
 
@@ -23,6 +24,7 @@ export default function ProjectsPage() {
   const [error, setError] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [filter, setFilter] = useState<Filter>('all')
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     getProjects()
@@ -30,7 +32,11 @@ export default function ProjectsPage() {
       .catch(() => setError(true))
   }, [attempt])
 
-  const addButton = <Button icon={<Plus className="size-4" />}>Add project</Button>
+    const addButton = (
+    <Button icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
+      Add project
+    </Button>
+  )
   const countFor = (f: Filter) =>
     projects ? projects.filter((p) => f === 'all' || p.status === f).length : undefined
   const visible = projects?.filter((p) => filter === 'all' || p.status === filter) ?? []
@@ -106,6 +112,12 @@ export default function ProjectsPage() {
           )}
         </>
       )}
+  {adding && (
+    <AddProjectModal
+      onClose={() => setAdding(false)}
+      onCreated={(project) => setProjects((list) => [project, ...(list ?? [])])}
+    />
+  )}
     </div>
   )
 }
