@@ -35,3 +35,15 @@ export type NewProject = {
   teammates: Teammate[]
   status: 'pending' | 'self-reported' | 'draft'
 }
+
+export type Institution = { id: string | null; name: string }
+
+export type OnboardingData = {
+  headline: string
+  location: string
+  institution: Institution | null
+  programme: string
+  track: string
+  year: string
+  skills: string[]
+}
