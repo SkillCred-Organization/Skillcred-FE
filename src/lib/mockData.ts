@@ -1,3 +1,5 @@
+import type { Activity } from '../types'
+
 export const mockUser = { name: 'Adaeze Okafor', role: 'Learner', initials: 'AO' }
 
 export const mockCounts = {
@@ -7,3 +9,28 @@ export const mockCounts = {
   achievements: 2,
   verification: 1,
 }
+
+
+export const mockVerification = {
+  institution: 'Lagos Tech Institute',
+  verified: 4,
+  total: 7,
+  waiting: 2,
+  needsChanges: 1,
+}
+
+export const mockStats = {
+  projects: { value: 4, sub: '1 verified · 1 pending' },
+  certifications: { value: 2, sub: '1 verified' },
+  skills: { value: 8, sub: '5 verified' },
+  achievements: { value: 2, sub: '1 pending' },
+}
+
+export const mockActivity: Activity[] = [
+  { id: '1', kind: 'verified', text: 'Payments API capstone was verified by Lagos Tech Institute', time: '2 days ago' },
+  { id: '2', kind: 'confirmed', text: 'Fatima Sani confirmed your role on Inventory tracker', time: 'Yesterday' },
+  { id: '3', kind: 'needs-changes', text: 'Cloud Practitioner needs changes', time: '1 day ago', action: 'Fix' },
+  { id: '4', kind: 'draft', text: 'Draft saved: Library booking API', time: 'Just now', action: 'Continue' },
+]
+
+export const mockProfileLink = 'skillcred.app/u/adaeze-okafor'
