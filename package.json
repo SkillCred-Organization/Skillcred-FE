@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test:auth": "node --test tests/auth.test.mjs",
+    "test:auth": "node --test tests/auth.test.mjs tests/googleIdentity.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

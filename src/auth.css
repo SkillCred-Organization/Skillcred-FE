@@ -147,3 +147,11 @@
   .auth-status .auth-link-button { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .auth-page *, .auth-page *::before, .auth-page *::after { animation: none !important; transition: none !important; } }
+
+.auth-google-area { margin-top: 24px; min-width: 0; }
+.auth-role + .auth-google-area, .auth-alert + .auth-google-area { margin-top: 20px; }
+.auth-google-area .auth-google { margin-top: 0; }
+.auth-google-host { display: flex; align-items: center; justify-content: center; min-height: 48px; width: 100%; }
+.auth-google-host[hidden] { display: none; }
+.auth-google-host[data-disabled] { opacity: .6; }
+.auth-google-hint { margin-top: 8px; color: var(--auth-muted); font-size: 14px; line-height: 20px; }

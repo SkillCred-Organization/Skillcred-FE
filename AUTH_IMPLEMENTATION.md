@@ -34,7 +34,7 @@ All HTTP calls go through `src/lib/apiClient.ts`. The shared client was imported
 
 Learner registration sends `fullName, email, password, acceptedTerms`. Admin registration sends `institutionName, website, registrationNumber?, fullName, jobTitle, email, password, authorised`. Errors shaped as `errors: { field: [messages] }` are passed to React Hook Form. Admin codes `FREE_EMAIL`, `DOMAIN_MISMATCH`, and `INSTITUTION_EXISTS` receive specific guidance; errors in institution fields return the form to step 1 without dropping entered values. Email subdomains are accepted.
 
-Google uses Google Identity Services and sends its ID credential to `POST /api/auth/google`. New users explicitly supply role and acceptedTerms; existing users do not silently accept terms. The application retains Google's pending credential only in component memory. The customized DM Sans button opens the GIS One Tap/credential prompt; availability depends on browser/account settings. Missing configuration or a dismissed/unavailable prompt produces an actionable email-sign-in fallback.
+Google uses the official Google Identity Services button with popup UX and sends the returned ID credential to POST /api/auth/google. New learners explicitly accept Terms before the Google button is enabled; existing users do not silently accept terms. Popup responses are associated with their originating button, and stale results from unmounted pages are ignored. Script-loading failures offer a retry or email sign-in. The flow no longer depends on the One Tap prompt.
 
 Reset request uses `POST /api/auth/forgot-password { email }`; reset uses `POST /api/auth/reset-password { token, password }`. No fake tokens, success timers, or browser-only password changes are used. “Open the link” explains how to follow the secure link in the delivered email; it cannot manufacture or open a backend-generated secret reset URL. Resend only makes a request when clicked after the cooldown.
 
@@ -69,3 +69,11 @@ The dashboard, projects, onboarding, and their shared components from origin/mai
 - Public addresses retain the existing skillcred.app/u/:handle format. This frontend repository does not yet implement the public /u/:handle page, so displaying/saving an address does not confirm that public sharing is deployed.
 
 - Follow-up validation passed: all 19 authentication/profile contract tests, TypeScript, full ESLint, and the production build. Browser checks against the isolated fixture verified the missing-profile suggestion, unavailable handles, a conflict during saving, successful saving, persistence after reload, and copying the saved URL. The real account handle was not changed during testing.
+
+## Google sign-in button follow-up (2026-10-09)
+
+- Reproduced the former One Tap failure locally, then replaced it with the official responsive Google-rendered button. The SDK loads once, supports retry, and routes credentials only to the originating mounted button. Closing a Google window does not leave the email form locked.
+- Learner signup explains the Terms prerequisite and focuses the checkbox if Google is requested before consent. No real account was created during these checks.
+- All 23 authentication/profile/Google SDK tests passed, as did TypeScript, full ESLint, and the production build. Browser checks confirmed the official login button renders and signup blocks Google authentication without consent.
+- Google currently rejects the local origin for the configured client ID. The Google Cloud client owner must add http://localhost, http://localhost:3000, and https://skillcredfe-latest.onrender.com to Authorized JavaScript origins. A real Google login is still unverified until that configuration is corrected.
+- The live Render frontend was observed serving the old placeholder login and returning an Nginx 404 for /login. Authentication must be deployed from integrate-partner-updates; a Docker deployment must also include the partner's Nginx routing configuration and build-time VITE settings. No merge into main or live deployment was performed.
