@@ -41,3 +41,12 @@ export const mockProjects: Project[] = [
   { id: '3', title: 'Weather dashboard', summary: 'Built after graduating.', status: 'self-reported', meta: 'Personal project' },
   { id: '4', title: 'Library booking API', summary: 'Room booking service with email reminders.', status: 'draft', meta: 'Draft · only you can see it' },
 ]
+
+export const mockInstitutions = [
+  { id: 'inst-1', name: 'AltSchool Africa' },
+  { id: 'inst-2', name: 'Lagos Tech Institute' },
+  { id: 'inst-3', name: 'ALX' },
+  { id: 'inst-4', name: 'HNG Academy' },
+  { id: 'inst-5', name: 'Aptech Learning' },
+  { id: 'inst-6', name: 'AppClick ICT Academy' },
+]

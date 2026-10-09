@@ -14,7 +14,7 @@ import InstitutionSignupPage from "./components/pages/InstitutionSignupPage";
 import AppLayout from './components/layout/AppLayout'
 import DashboardPage from './features/dashboard/DashboardPage'
 import ProjectsPage from './features/projects/ProjectsPage'
-
+import OnboardingPage from './features/onboarding/OnboardingPage'
 
 const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>
 
@@ -57,6 +57,7 @@ export default function App() {
   <Route path="settings" element={stub('Settings')} />
   <Route path="profile" element={stub('Profile')} />
 </Route>
+  <Route path="/onboarding" element={<OnboardingPage />} />
     </Routes>
   );
 }
