@@ -13,6 +13,8 @@ import UserTypePage from "./components/pages/UserTypePage";
 import InstitutionSignupPage from "./components/pages/InstitutionSignupPage";
 import AppLayout from './components/layout/AppLayout'
 import DashboardPage from './features/dashboard/DashboardPage'
+import ProjectsPage from './features/projects/ProjectsPage'
+
 
 const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>
 
@@ -46,7 +48,7 @@ export default function App() {
       <Route path="/app" element={<AppLayout />}>
   <Route index element={<Navigate to="dashboard" replace />} />
   <Route path="dashboard" element={<DashboardPage />} />
-  <Route path="projects" element={stub('Projects')} />
+  <Route path="projects" element={<ProjectsPage />} />
   <Route path="certifications" element={stub('Certifications')} />
   <Route path="skills" element={stub('Skills')} />
   <Route path="achievements" element={stub('Achievements')} />

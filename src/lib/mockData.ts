@@ -1,4 +1,4 @@
-import type { Activity } from '../types'
+import type { Activity, Project } from '../types'
 
 export const mockUser = { name: 'Adaeze Okafor', role: 'Learner', initials: 'AO' }
 
@@ -34,3 +34,10 @@ export const mockActivity: Activity[] = [
 ]
 
 export const mockProfileLink = 'skillcred.app/u/adaeze-okafor'
+
+export const mockProjects: Project[] = [
+  { id: '1', title: 'Payments API capstone', summary: 'REST API with auth, ledgers and webhooks.', status: 'verified', meta: 'via Lagos Tech Institute · verified 2 days ago' },
+  { id: '2', title: 'Inventory tracker', summary: 'Stock app for a campus shop, built with 2 teammates.', status: 'pending', meta: 'Sent to Lagos Tech Institute · 3 days ago' },
+  { id: '3', title: 'Weather dashboard', summary: 'Built after graduating.', status: 'self-reported', meta: 'Personal project' },
+  { id: '4', title: 'Library booking API', summary: 'Room booking service with email reminders.', status: 'draft', meta: 'Draft · only you can see it' },
+]
