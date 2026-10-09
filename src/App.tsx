@@ -52,6 +52,7 @@ export default function App() {
   <Route index element={<Navigate to="dashboard" replace />} />
   <Route path="dashboard" element={<DashboardPage />} />
   <Route path="projects" element={<ProjectsPage />} />
+  <Route path="profile" element={<ProfilePage />} />
   <Route path="certifications" element={stub('Certifications')} />
   <Route path="skills" element={stub('Skills')} />
   <Route path="achievements" element={stub('Achievements')} />
