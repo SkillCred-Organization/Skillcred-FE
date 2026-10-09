@@ -1,24 +1,63 @@
+import { useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import Logo from "./Logo";
 
+const links = [
+  { href: "#learners", label: "For learners" },
+  { href: "#institutions", label: "For institutions" },
+  { href: "#about", label: "About us" },
+];
+
 export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
-    <header className="bg-[#FFF8F3]">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-10">
-          <Logo />
-          <ul className="hidden items-center gap-6 text-sm text-[#2B1A10] md:flex">
-            <li><a href="#learners" className="hover:text-[#3F6B12]">For learners</a></li>
-            <li><a href="#institutions" className="hover:text-[#3F6B12]">For institutions</a></li>
-            <li><a href="#about" className="hover:text-[#3F6B12]">About us</a></li>
-          </ul>
+    <header className="landing-header">
+      <nav
+        className="landing-container landing-nav"
+        aria-label="Main navigation"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && menuOpen) {
+            closeMenu();
+            menuButton.current?.focus();
+          }
+        }}
+      >
+        <Logo className="landing-logo" />
+        <ul className="desktop-nav">
+          {links.map(({ href, label }) => (
+            <li key={href}><a href={href}>{label}</a></li>
+          ))}
+        </ul>
+        <div className="desktop-nav nav-actions">
+          <Link className="login-link" to="/login">Log in</Link>
+          <Link className="landing-button button-primary" to="/user-type">Get started</Link>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <a href="/login" className="text-[#2B1A10] underline-offset-4 hover:underline">Log in</a>
-          <a
-            href="/signup"
-            className="rounded-full bg-[#542C18] px-5 py-2 font-medium text-white transition hover:bg-[#432313]">
+        <button
+          ref={menuButton}
+          type="button"
+          className="mobile-menu-toggle"
+          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        <div id="mobile-navigation" className="mobile-navigation" hidden={!menuOpen}>
+          {links.map(({ href, label }) => (
+            <a key={href} href={href} onClick={closeMenu}>{label}</a>
+          ))}
+          <Link to="/login" onClick={closeMenu}>Log in</Link>
+          <Link className="landing-button button-primary" to="/user-type" onClick={closeMenu}>
             Get started
-          </a>
+          </Link>
         </div>
       </nav>
     </header>

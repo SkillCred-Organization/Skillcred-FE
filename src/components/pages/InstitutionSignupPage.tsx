@@ -1,150 +1,83 @@
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowLeft, Building2, Globe2, LockKeyhole, Mail, UserRound } from 'lucide-react'
-import Button from '../ui/Button'
-import Input from '../ui/Input'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Building2, ChevronLeft, Link as LinkIcon, LockKeyhole, Mail, UserRound } from 'lucide-react'
+import { Controller, useForm } from 'react-hook-form'
 import AuthPageLayout from './AuthPageLayout'
+import { Agreement, AuthAlert, AuthField, AuthSubmit, BackLink } from './AuthControls'
+import { authApi, emailMatchesWebsite, websiteDomain, type AdminRegistration } from '../../lib/auth'
+import { applyFieldErrors, emailRules, nameRules } from '../../lib/authForm'
+import { useAuth } from '../../features/auth/authContext'
 
+const institutionFields = ['institutionName', 'website', 'registrationNumber'] as const
+const allFields = [...institutionFields, 'fullName', 'jobTitle', 'email', 'password', 'authorised'] as const
 export default function InstitutionSignupPage() {
   const [step, setStep] = useState<1 | 2>(1)
   const [message, setMessage] = useState('')
-  const [institutionDetails, setInstitutionDetails] = useState({
-    institutionName: '',
-    website: '',
-    registrationNumber: '',
+  const { register, control, trigger, handleSubmit, getValues, setError, clearErrors, formState: { errors, isSubmitting } } = useForm<AdminRegistration>({
+    shouldUnregister: false,
+    defaultValues: { institutionName: '', website: '', registrationNumber: '', fullName: '', jobTitle: '', email: '', password: '', authorised: false },
   })
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (step === 1) {
-      const formData = new FormData(event.currentTarget)
-      setInstitutionDetails({
-        institutionName: String(formData.get('institutionName') ?? ''),
-        website: String(formData.get('website') ?? ''),
-        registrationNumber: String(formData.get('registrationNumber') ?? ''),
+  const navigate = useNavigate()
+  const { acceptSession } = useAuth()
+  async function submit(values: AdminRegistration) {
+    setMessage('')
+    try {
+      const response = await authApi.registerAdmin({
+        ...values, institutionName: values.institutionName.trim(), fullName: values.fullName.trim(),
+        jobTitle: values.jobTitle.trim(), website: values.website.trim(),
+        registrationNumber: values.registrationNumber?.trim() || undefined,
       })
-      setStep(2)
-      setMessage('')
-      return
+      acceptSession(response)
+      navigate('/verify-email', { replace: true, state: { email: values.email, institutionName: values.institutionName } })
+    } catch (error) {
+      const apiError = applyFieldErrors(error, setError, allFields)
+      setMessage(apiError.message)
+      if (apiError.code === 'FREE_EMAIL') setError('email', { type: 'server', message: 'Use your institutional work email, rather than a personal email address.' }, { shouldFocus: true })
+      if (apiError.code === 'DOMAIN_MISMATCH') setError('email', { type: 'server', message: 'Your work email must use your institution’s website domain.' }, { shouldFocus: true })
+      if (apiError.code === 'INSTITUTION_EXISTS') {
+        setError('website', { type: 'server', message: 'This institution is already registered. Contact its existing account owner.' })
+        setStep(1)
+      } else if (institutionFields.some(field => apiError.fieldErrors?.[field]?.length)) setStep(1)
     }
-    setMessage('Your institution registration is not connected yet. Connect this form to your registration service.')
   }
-
-  return (
-    <AuthPageLayout>
-      <section className="w-full max-w-[490px] rounded-xl border border-[#f3e1d6] bg-white p-6 shadow-[0_8px_24px_rgba(69,38,20,0.08)] sm:p-8">
-        <p className="text-xs text-ink-muted">Step {step} of 2 · {step === 1 ? 'Institution' : 'Your account'}</p>
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#f4eae7]">
-          <div className={`h-full rounded-full bg-[#4b8d0b] transition-all ${step === 1 ? 'w-1/2' : 'w-full'}`} />
-        </div>
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-ink">
-          {step === 1 ? 'Register your institution' : 'Create your admin account'}
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-ink-muted">
-          {step === 1
-            ? 'We check these details before you can verify claims. It usually takes a few hours.'
-            : 'You’ll review claims for your institution. Use your work email on the institution’s domain.'}
-        </p>
-
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          {step === 1 ? (
-            <>
-              <Input
-                label="Institution name"
-                name="institutionName"
-                autoComplete="organization"
-                placeholder="e.g. Lagos Tech Institute"
-                icon={<Building2 className="size-4" />}
-                value={institutionDetails.institutionName}
-                onChange={(event) => setInstitutionDetails({ ...institutionDetails, institutionName: event.target.value })}
-                required
-              />
-              <Input
-                label="Website"
-                name="website"
-                type="url"
-                autoComplete="url"
-                placeholder="https://"
-                helperText="Your work email must use this domain."
-                icon={<Globe2 className="size-4" />}
-                value={institutionDetails.website}
-                onChange={(event) => setInstitutionDetails({ ...institutionDetails, website: event.target.value })}
-                required
-              />
-              <Input
-                label="Registration number (optional)"
-                name="registrationNumber"
-                placeholder="e.g. CAC number"
-                value={institutionDetails.registrationNumber}
-                onChange={(event) => setInstitutionDetails({ ...institutionDetails, registrationNumber: event.target.value })}
-              />
-            </>
-          ) : (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label="Your name"
-                  name="administratorName"
-                  autoComplete="name"
-                  placeholder="Your full name"
-                  icon={<UserRound className="size-4" />}
-                  required
-                />
-                <Input
-                  label="Job title"
-                  name="jobTitle"
-                  autoComplete="organization-title"
-                  placeholder="e.g. Programme lead"
-                  required
-                />
-              </div>
-              <Input
-                label="Work email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@institution.edu"
-                icon={<Mail className="size-4" />}
-                required
-              />
-              <Input
-                label="Password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Create a password"
-                helperText="At least 8 characters."
-                minLength={8}
-                icon={<LockKeyhole className="size-4" />}
-                required
-              />
-              <label className="flex items-start gap-2 text-sm text-ink">
-                <input className="mt-1 size-4 accent-[#4b8d0b]" type="checkbox" name="authorised" required />
-                <span>I&apos;m authorised to verify learner claims for this institution.</span>
-              </label>
-            </>
-          )}
-
-          <Button type="submit" className="w-full">
-            {step === 1 ? 'Continue' : 'Submit for review'}
-          </Button>
-        </form>
-
-        {message && <p role="status" className="mt-4 text-sm text-ink-muted">{message}</p>}
-        {step === 1 ? (
-          <Link to="/user-type" className="mx-auto mt-4 flex w-fit items-center gap-1 text-sm text-ink-muted hover:text-brand">
-            <ArrowLeft className="size-3" /> Back
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => { setStep(1); setMessage('') }}
-            className="mx-auto mt-4 flex items-center gap-1 text-sm text-ink-muted hover:text-brand"
-          >
-            <ArrowLeft className="size-3" /> Back
-          </button>
-        )}
-      </section>
-    </AuthPageLayout>
-  )
+  return <AuthPageLayout><section className="auth-panel auth-institution">
+    <div className="auth-step">
+      <p className="auth-step-label">Step {step} of 2<span className="auth-step-detail"> · {step === 1 ? 'Institution' : 'Your account'}</span></p>
+      <div className="auth-progress" aria-hidden="true"><span className="is-complete" /><span className={step === 2 ? 'is-complete' : ''} /></div>
+    </div>
+    <h1>{step === 1 ? 'Register your institution' : <><span className="auth-desktop-copy">Create your admin account</span><span className="auth-mobile-copy">Register your institution</span></>}</h1>
+    <p className="auth-description">{step === 1 ? 'We check these details before you can verify claims. It usually takes few hours.' : <>
+      <span className="auth-desktop-copy">You’ll review claims for {getValues('institutionName') || 'your institution'}. Use your work email on the institution’s domain.</span>
+      <span className="auth-mobile-copy">We check these details before you can verify claims. It usually takes few hours.</span>
+    </>}</p>
+    <AuthAlert message={message} />
+    <form className="auth-form auth-form-spaced" noValidate aria-busy={isSubmitting} onSubmit={event => {
+      if (step === 1) {
+        event.preventDefault()
+        void trigger([...institutionFields], { shouldFocus: true }).then(valid => { if (valid) { setStep(2); setMessage('') } })
+      } else void handleSubmit(submit, invalid => { if (institutionFields.some(field => invalid[field])) setStep(1) })(event)
+    }}>
+      <fieldset className="auth-fields" disabled={isSubmitting}>
+        {step === 1 ? <>
+          <AuthField label="Institution name" placeholder="e.g. Lagos Tech Institute" autoComplete="organization" icon={<Building2 />} {...register('institutionName', { required: 'Enter your institution’s name', validate: value => !!value.trim() || 'Enter your institution’s name' })} error={errors.institutionName?.message} />
+          <AuthField label="Website" type="url" placeholder="https://" autoComplete="url" helperText="Your work email must use this domain." icon={<LinkIcon />} {...register('website', { required: 'Enter your institution’s website', setValueAs: value => value.trim(), validate: value => !!websiteDomain(value) || 'Enter a valid website, including https://' })} error={errors.website?.message} />
+          <AuthField label="Registration number (optional)" placeholder="e.g. CAC number" {...register('registrationNumber')} error={errors.registrationNumber?.message} />
+        </> : <>
+          <div className="auth-person-row">
+            <AuthField label="Your name" placeholder="Your full name" autoComplete="name" icon={<UserRound />} {...register('fullName', nameRules)} error={errors.fullName?.message} />
+            <AuthField label="Job title" placeholder="e.g. Programme lead" autoComplete="organization-title" {...register('jobTitle', { required: 'Enter your job title', validate: value => !!value.trim() || 'Enter your job title' })} error={errors.jobTitle?.message} />
+          </div>
+          <AuthField label="Work email" type="email" placeholder="you@institution.edu" autoComplete="email" icon={<Mail />} {...register('email', { ...emailRules, validate: value => emailMatchesWebsite(value, getValues('website')) || 'Your work email must use your institution’s website domain.' })} error={errors.email?.message} />
+          <AuthField label="Password" type="password" placeholder="Create a password" autoComplete="new-password" helperText="At least 8 characters" icon={<LockKeyhole />} {...register('password', { required: 'Create a password', minLength: { value: 8, message: 'Use at least 8 characters' } })} error={errors.password?.message} />
+        </>}
+      </fieldset>
+      {step === 2 && <Controller name="authorised" control={control} rules={{ validate: value => value === true || 'Confirm you are authorised to verify claims for this institution.' }} render={({ field }) => (
+        <Agreement name={field.name} ref={field.ref} checked={field.value} onBlur={field.onBlur}
+          onChange={event => { field.onChange(event.target.checked); if (event.target.checked) clearErrors('authorised') }}
+          disabled={isSubmitting} error={errors.authorised?.message}>I’m authorised to verify learner claims for this institution.</Agreement>
+      )} />}
+      <AuthSubmit busy={isSubmitting} busyText="Submitting…">{step === 1 ? 'Continue' : 'Submit for review'}</AuthSubmit>
+    </form>
+    {step === 1 ? <BackLink to="/user-type">Back</BackLink> : <button type="button" className="auth-back" disabled={isSubmitting} onClick={() => { setStep(1); setMessage('') }}><ChevronLeft aria-hidden="true" />Back</button>}
+  </section></AuthPageLayout>
 }

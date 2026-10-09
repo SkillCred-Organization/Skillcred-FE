@@ -1,43 +1,35 @@
-const logos: string[] = [
-  "/institution-logos/AltSchool.svg",
-  "/institution-logos/AppClick.svg",
-  "/institution-logos/ApTech.svg",
-  "/institution-logos/HNG.svg",
-  "/institution-logos/SQICollege.svg",
-  "/institution-logos/TSacademy.svg",
+const logos = [
+  { name: "AltSchool", src: "/institution-logos/AltSchool.svg" },
+  { name: "AppClick ICT Academy", src: "/institution-logos/AppClick.svg" },
+  { name: "Aptech Learning", src: "/institution-logos/ApTech.svg" },
+  { name: "SQI College", src: "/institution-logos/SQICollege.svg" },
+  { name: "HNG", src: "/institution-logos/HNG.svg" },
+  { name: "TS Academy", src: "/institution-logos/TSacademy.svg" },
 ];
 
 export default function TrustedLogos() {
   return (
-    <section className="bg-[#FFF8F3] pb-14">
-      <div className="mx-auto max-w-6xl px-6 text-center">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-[#5A4A40]">
+    <section className="trusted-section" aria-labelledby="trusted-title">
+      <div className="landing-container">
+        <h2 id="trusted-title" className="landing-eyebrow trusted-title">
           Trusted by institutions across Nigeria
-        </p>
-
-        {/* NEW: Faded edges around the slideshow */}
-        <div className="relative mt-6 overflow-hidden">
-          {/* NEW: Left fade */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-[#FFF8F3] to-transparent" />
-
-          {/* NEW: Sliding logos */}
-          <div className="flex w-max animate-[logo-scroll_25s_linear_infinite] items-center gap-12">
-            {[...logos, ...logos].map((logo, index) => (
-              <div
-                key={`${logo}-${index}`}
-                className="flex h-16 w-36 shrink-0 items-center justify-center"
-              >
-                <img
-                  src={logo}
-                  alt="Institution logo"
-                  className="max-h-12 max-w-32 object-contain"
-                />
-              </div>
+        </h2>
+        <div
+          id="institution-logo-slideshow"
+          className="trusted-viewport"
+          tabIndex={0}
+          role="group"
+          aria-label="Partner institutions"
+        >
+          <div className="trusted-track">
+            {[false, true].map((duplicate) => (
+              <ul className="trusted-group" key={String(duplicate)} aria-hidden={duplicate || undefined}>
+                {logos.map(({ name, src }) => (
+                  <li key={name}><img src={src} alt={duplicate ? "" : name} /></li>
+                ))}
+              </ul>
             ))}
           </div>
-
-          {/* NEW: Right fade */}
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-[#FFF8F3] to-transparent" />
         </div>
       </div>
     </section>
