@@ -8,8 +8,8 @@ type AvatarProps = {
 const sizes = { sm: 'size-6 text-[10px]', md: 'size-8 text-xs', lg: 'size-12 text-base' }
 const tones = {
   apricot: 'bg-soft text-brand',
-  sage: 'bg-banner text-accent-deep',
-  leaf: 'bg-accent-soft text-accent-deep',
+  sage: 'bg-sage-bg text-sage-text',
+  leaf: 'bg-verified-bg text-verified-text',
 }
 
 export default function Avatar({ initials, size = 'md', tone = 'apricot', className = '' }: AvatarProps) {
