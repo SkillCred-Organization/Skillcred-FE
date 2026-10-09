@@ -48,4 +48,13 @@ Reset request uses `POST /api/auth/forgot-password { email }`; reset uses `POST 
 
 ## GitHub dashboard integration
 
-The dashboard, projects, onboarding, and their shared components were imported from origin/main (237b422). The dashboard, sidebar, and onboarding now use the authenticated user's name rather than the hard-coded demo name. Dashboard counts/activity and project storage still use the upstream mock data; connecting those feature APIs is separate from authentication. No changes have been pushed to GitHub by this task.
+The dashboard, projects, onboarding, and their shared components from origin/main (237b422) are merged into the local integrate-partner-updates branch. The pre-merge local implementation is preserved in commit f9e5375. The dashboard, sidebar, and onboarding now use the authenticated user's name rather than the hard-coded demo name. Dashboard counts/activity and project storage still use the upstream mock data; connecting those feature APIs is separate from authentication. No changes have been pushed to GitHub by this task.
+## Integration verification (2026-10-09)
+
+- Fetched origin and merged origin/main (237b422) after saving the local work on a separate branch. Reviewed all conflicts; most were equivalent copied files with line-ending or final-newline differences.
+- Preserved authentication routes, token/user persistence, signed-in names, local fonts, password controls, responsive landing styles, and the partner's dashboard, projects, and onboarding Back button.
+- Passed all 15 authentication contract tests, TypeScript build checks, full ESLint, and the Vite production build. Production bundling used RAYON_NUM_THREADS=1 and a 384 MB Node heap to accommodate this computer's memory limits.
+- Browser checks used synthetic @example.test accounts on a separate frontend (port 3001) and temporary API fixture (port 4001). Verified unchecked/checked consent, signup to onboarding, the onboarding Back button and completion, response names in onboarding/sidebar/dashboard, session restoration, project draft creation, logout, failed login, and login to the dashboard.
+- Verified landing profile-card spacing, signup, and dashboard at a 375px mobile viewport with no horizontal overflow. Closed temporary browser tabs and stopped both test servers afterward.
+- These checks do not verify the live backend or Google sign-in. The documented backend addresses remain unavailable; upstream project storage and onboarding save still use mocks.
+- .env.local remains ignored and unchanged. Nothing has been pushed to GitHub by this task.
