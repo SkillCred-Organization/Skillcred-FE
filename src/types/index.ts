@@ -13,3 +13,11 @@ export type Status =
   time: string
   action?: string
 }
+
+export type Project = {
+  id: string
+  title: string
+  summary: string
+  status: Status
+  meta: string
+}
