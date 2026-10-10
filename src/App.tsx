@@ -59,7 +59,6 @@ export default function App() {
   <Route path="verification" element={stub('Verification')} />
   <Route path="share" element={stub('Share profile')} />
   <Route path="settings" element={stub('Settings')} />
-  <Route path="profile" element={stub('Profile')} />
 </Route>
   <Route path="/onboarding" element={<OnboardingPage />} />
     </Route>
