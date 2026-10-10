@@ -52,6 +52,7 @@
 .auth-submit { width: 100%; height: 48px; margin-top: 20px; padding: 12px 20px; font-size: 16px; line-height: 24px; font-weight: 500; }
 .auth-agreement + .auth-submit { margin-top: 28px; }
 .auth-submit svg { width: 18px; height: 18px; }
+.auth-wait-notice { margin-top: 12px; color: var(--auth-muted); font-size: 14px; line-height: 20px; }
 .auth-footer { margin-top: 20px; color: var(--color-ink-muted); font-size: 18px; line-height: 28px; text-align: center; }
 .auth-forgot { margin-top: 20px; font-size: 16px; line-height: 24px; text-align: right; }
 .auth-back { display: flex; width: fit-content; align-items: center; justify-content: center; gap: 8px; margin: 20px auto 0; color: var(--color-ink-muted); font-size: 16px; line-height: 28px; }
@@ -147,3 +148,11 @@
   .auth-status .auth-link-button { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .auth-page *, .auth-page *::before, .auth-page *::after { animation: none !important; transition: none !important; } }
+
+.auth-google-area { margin-top: 24px; min-width: 0; }
+.auth-role + .auth-google-area, .auth-alert + .auth-google-area { margin-top: 20px; }
+.auth-google-area .auth-google { margin-top: 0; }
+.auth-google-host { display: flex; align-items: center; justify-content: center; min-height: 48px; width: 100%; }
+.auth-google-host[hidden] { display: none; }
+.auth-google-host[data-disabled] { opacity: .6; }
+.auth-google-hint { margin-top: 8px; color: var(--auth-muted); font-size: 14px; line-height: 20px; }

@@ -1,5 +1,5 @@
 import { ChevronLeft, TriangleAlert } from 'lucide-react'
-import { useEffect, useId, useRef, type ComponentProps, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
@@ -7,8 +7,16 @@ import Button from '../ui/Button'
 export function AuthField(props: ComponentProps<typeof Input>) {
   return <Input {...props} className={`auth-field ${props.className ?? ''}`} />
 }
+function SlowRequestNotice() {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setVisible(true), 10000)
+    return () => window.clearTimeout(timer)
+  }, [])
+  return visible ? <p className="auth-wait-notice" role="status">Still connecting to SkillCred. Please keep this page open while we finish your request.</p> : null
+}
 export function AuthSubmit({ busy, children, busyText }: { busy: boolean; children: ReactNode; busyText: string }) {
-  return <Button type="submit" loading={busy} className="auth-submit" aria-busy={busy}>{busy ? busyText : children}</Button>
+  return <><Button type="submit" loading={busy} className="auth-submit" aria-busy={busy}>{busy ? busyText : children}</Button>{busy && <SlowRequestNotice />}</>
 }
 export function AuthAlert({ message, detail, focusOnShow = false }: { message?: string; detail?: ReactNode; focusOnShow?: boolean }) {
   const alertRef = useRef<HTMLDivElement>(null)

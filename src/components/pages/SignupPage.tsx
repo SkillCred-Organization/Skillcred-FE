@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GraduationCap, LockKeyhole, Mail, UserRound } from 'lucide-react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import AuthPageLayout from './AuthPageLayout'
 import GoogleAuthButton from './GoogleAuthButton'
 import { Agreement, AuthAlert, AuthDivider, AuthField, AuthSubmit, TermsText } from './AuthControls'
@@ -11,6 +11,7 @@ import { useAuth } from '../../features/auth/authContext'
 
 export default function SignupPage() {
   const { register, control, handleSubmit, setError, clearErrors, trigger, getValues, formState: { errors, isSubmitting } } = useForm<LearnerRegistration>({ defaultValues: { fullName: '', email: '', password: '', acceptedTerms: false } })
+  const acceptedTerms = useWatch({ control, name: 'acceptedTerms' })
   const [message, setMessage] = useState('')
   const [googleBusy, setGoogleBusy] = useState(false)
   const { acceptSession } = useAuth()
@@ -30,7 +31,7 @@ export default function SignupPage() {
     <h1>Create your account</h1><p className="auth-description">It takes about 2 minutes.</p>
     <div className="auth-role"><GraduationCap aria-hidden="true" /><span>Signing up as a <strong>learner</strong></span><Link className="auth-link" to="/user-type">Change</Link></div>
     <AuthAlert message={message} focusOnShow />
-    <GoogleAuthButton label="Continue with Google" disabled={isSubmitting} onBusyChange={setGoogleBusy} beforeSignIn={() => trigger('acceptedTerms', { shouldFocus: true })} onError={failure} onCredential={async credential => {
+    <GoogleAuthButton label="Continue with Google" disabled={isSubmitting} onBusyChange={setGoogleBusy} requiresConsent={!acceptedTerms} onConsentRequired={() => { void trigger('acceptedTerms', { shouldFocus: true }) }} onError={failure} onCredential={async credential => {
       setMessage('')
       const response = await authApi.google({ credential, role: 'learner', acceptedTerms: getValues('acceptedTerms') })
       navigate(authDestination(acceptSession(response), 'signup'), { replace: true })

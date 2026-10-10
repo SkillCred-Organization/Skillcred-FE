@@ -14,16 +14,18 @@ export type AdminRegistration = {
   institutionName: string; website: string; registrationNumber?: string
   fullName: string; jobTitle: string; email: string; password: string; authorised: boolean
 }
+// Allow a sleeping host time to start; never automatically repeat account mutations.
+const AUTH_TIMEOUT_MS = 90000
 const post = <T>(endpoint: string, body: unknown, auth = false) =>
-  apiClient<T>(endpoint, { method: 'POST', body: JSON.stringify(body), auth })
+  apiClient<T>(endpoint, { method: 'POST', body: JSON.stringify(body), auth, timeoutMs: AUTH_TIMEOUT_MS })
 
 export const authApi = {
   login: (values: { email: string; password: string }) => post<AuthResponse>('/api/auth/login', values),
   registerLearner: (values: LearnerRegistration) => post<AuthResponse>('/api/auth/register/learner', values),
   registerAdmin: (values: AdminRegistration) => post<AuthResponse>('/api/auth/register/admin', values),
   google: (values: { credential: string; role?: AuthUser['role']; acceptedTerms?: boolean }) => post<AuthResponse>('/api/auth/google', values),
-  me: (signal?: AbortSignal) => apiClient<{ user: AuthUser }>('/api/auth/me', { signal }),
-  verifyEmail: (token: string) => apiClient<{ message: string; institutionStatus?: string }>(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { auth: false }),
+  me: (signal?: AbortSignal) => apiClient<{ user: AuthUser }>('/api/auth/me', { signal, timeoutMs: AUTH_TIMEOUT_MS }),
+  verifyEmail: (token: string) => apiClient<{ message: string; institutionStatus?: string }>(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { auth: false, timeoutMs: AUTH_TIMEOUT_MS }),
   resendVerification: (email: string) => post<{ message: string }>('/api/auth/resend-verification', { email }, true),
   forgotPassword: (email: string) => post<{ message: string }>('/api/auth/forgot-password', { email }),
   resetPassword: (token: string, password: string) => post<{ message: string }>('/api/auth/reset-password', { token, password }),
