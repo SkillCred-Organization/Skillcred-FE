@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import Button from '../ui/Button'
 import Modal from '../ui/Modal'
-import { tokenStore } from '../../lib/apiClient'
+import { useAuth } from '../../features/auth/authContext'
 
 export default function LogoutModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
+  const { logout } = useAuth()
 
-  function logout() {
-    tokenStore.clear()
-    localStorage.removeItem('auth_user') // the saved user details, once login stores them
+  function handleLogout() {
+    logout()
     navigate('/login', { replace: true })
   }
 
@@ -19,7 +19,7 @@ export default function LogoutModal({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={logout}>Log out</Button>
+          <Button onClick={handleLogout}>Log out</Button>
         </>
       }
     >
