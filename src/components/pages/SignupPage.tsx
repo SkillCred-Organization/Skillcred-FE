@@ -1,104 +1,54 @@
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowLeft, LockKeyhole, Mail, UserRound } from 'lucide-react'
-import Button from '../ui/Button'
-import Input from '../ui/Input'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { GraduationCap, LockKeyhole, Mail, UserRound } from 'lucide-react'
+import { Controller, useForm } from 'react-hook-form'
 import AuthPageLayout from './AuthPageLayout'
+import GoogleAuthButton from './GoogleAuthButton'
+import { Agreement, AuthAlert, AuthDivider, AuthField, AuthSubmit, TermsText } from './AuthControls'
+import { authApi, authDestination, type LearnerRegistration } from '../../lib/auth'
+import { applyFieldErrors, emailRules, nameRules, passwordRules } from '../../lib/authForm'
+import { useAuth } from '../../features/auth/authContext'
 
 export default function SignupPage() {
+  const { register, control, handleSubmit, setError, clearErrors, trigger, getValues, formState: { errors, isSubmitting } } = useForm<LearnerRegistration>({ defaultValues: { fullName: '', email: '', password: '', acceptedTerms: false } })
   const [message, setMessage] = useState('')
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setMessage('Account creation is not connected yet. Connect this form to your authentication service.')
+  const [googleBusy, setGoogleBusy] = useState(false)
+  const { acceptSession } = useAuth()
+  const navigate = useNavigate()
+  function failure(error: unknown) {
+    const apiError = applyFieldErrors(error, setError, ['fullName', 'email', 'password', 'acceptedTerms'])
+    setMessage(error instanceof Error ? error.message : apiError.message)
   }
-
-  return (
-    <AuthPageLayout>
-      <section className="w-full max-w-[450px] rounded-xl border border-[#f3e1d6] bg-white p-6 shadow-[0_8px_24px_rgba(69,38,20,0.08)] sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">Create your account</h1>
-        <p className="mt-1 text-sm text-ink-muted">It takes about 2 minutes.</p>
-        <div className="mt-4 flex items-center justify-between rounded-lg bg-[#f7efeb] px-3 py-2 text-xs text-ink-muted">
-          <span>Signing up as a learner</span>
-          <Link to="/user-type" className="font-medium text-brand underline underline-offset-2">Change</Link>
-        </div>
-        <button
-          type="button"
-          onClick={() => setMessage('Google sign-up is not connected yet.')}
-          className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-full border border-[#d6c5b7] text-sm font-medium text-ink hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-deep"
-        >
-          <img
-            src="/google.png"
-            alt="Google"
-            width={20}
-            height={20}
-            className="block"
-          />
-          Continue with Google
-        </button>
-        <div className="my-4 flex items-center gap-3 text-xs text-ink-muted">
-          <span className="h-px flex-1 bg-line" />
-          or
-          <span className="h-px flex-1 bg-line" />
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <Input
-            label="Full name"
-            name="name"
-            autoComplete="name"
-            placeholder="e.g. Adaeze Okafor"
-            icon={<UserRound className="size-4" />}
-            required
-          />
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            icon={<Mail className="size-4" />}
-            required
-          />
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Create a password"
-            helperText="At least 8 characters, with a number."
-            minLength={8}
-            pattern="(?=.*[0-9]).{8,}"
-            title="Use at least 8 characters and include a number."
-            icon={<LockKeyhole className="size-4" />}
-            required
-          />
-          <label className="flex items-start gap-2 text-xs leading-5 text-ink-muted">
-            <input
-              className="mt-1 size-3.5 accent-[#65361d]"
-              type="checkbox"
-              name="agreeToTerms"
-              required
-            />
-            <span>
-              I agree to the <a href="#terms" className="text-brand underline underline-offset-2">Terms</a>
-              {' '}and <a href="#privacy" className="text-brand underline underline-offset-2">Privacy Policy</a>.
-            </span>
-          </label>
-          <Button type="submit" className="w-full">Create account</Button>
-        </form>
-
-        {message && <p role="status" className="mt-4 text-sm text-ink-muted">{message}</p>}
-        <p className="mt-4 text-center text-sm text-ink-muted">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-brand underline-offset-4 hover:underline">
-            Log in
-          </Link>
-        </p>
-        <Link to="/user-type" className="mx-auto mt-4 flex w-fit items-center gap-1 text-xs text-ink-muted hover:text-brand">
-          <ArrowLeft className="size-3" /> Back
-        </Link>
-      </section>
-    </AuthPageLayout>
-  )
+  async function submit(values: LearnerRegistration) {
+    setMessage('')
+    try {
+      const response = await authApi.registerLearner({ ...values, fullName: values.fullName.trim() })
+      navigate(authDestination(acceptSession(response), 'signup'), { replace: true })
+    } catch (error) { failure(error) }
+  }
+  return <AuthPageLayout><section className="auth-panel auth-signup">
+    <h1>Create your account</h1><p className="auth-description">It takes about 2 minutes.</p>
+    <div className="auth-role"><GraduationCap aria-hidden="true" /><span>Signing up as a <strong>learner</strong></span><Link className="auth-link" to="/user-type">Change</Link></div>
+    <AuthAlert message={message} focusOnShow />
+    <GoogleAuthButton label="Continue with Google" disabled={isSubmitting} onBusyChange={setGoogleBusy} beforeSignIn={() => trigger('acceptedTerms', { shouldFocus: true })} onError={failure} onCredential={async credential => {
+      setMessage('')
+      const response = await authApi.google({ credential, role: 'learner', acceptedTerms: getValues('acceptedTerms') })
+      navigate(authDestination(acceptSession(response), 'signup'), { replace: true })
+    }} />
+    <AuthDivider />
+    <form className="auth-form" noValidate aria-busy={isSubmitting} onSubmit={handleSubmit(submit)}>
+      <fieldset className="auth-fields" disabled={isSubmitting || googleBusy}>
+        <AuthField label="Full name" placeholder="e.g. Adaeze Okafor" autoComplete="name" icon={<UserRound />} {...register('fullName', nameRules)} error={errors.fullName?.message} />
+        <AuthField label="Email" type="email" placeholder="you@example.com" autoComplete="email" icon={<Mail />} {...register('email', emailRules)} error={errors.email?.message} />
+        <AuthField label="Password" type="password" placeholder="Create a password" autoComplete="new-password" icon={<LockKeyhole />} helperText="At least 8 characters, with a number" {...register('password', passwordRules)} error={errors.password?.message} />
+      </fieldset>
+      <Controller name="acceptedTerms" control={control} rules={{ validate: value => value === true || 'Accept the Terms and Privacy Policy to continue.' }} render={({ field }) => (
+        <Agreement name={field.name} ref={field.ref} checked={field.value} onBlur={field.onBlur}
+          onChange={event => { field.onChange(event.target.checked); if (event.target.checked) clearErrors('acceptedTerms') }}
+          disabled={isSubmitting || googleBusy} error={errors.acceptedTerms?.message}><TermsText /></Agreement>
+      )} />
+      <AuthSubmit busy={isSubmitting || googleBusy} busyText={googleBusy ? 'Connecting to Google…' : 'Creating account…'}>Create account</AuthSubmit>
+    </form>
+    <p className="auth-footer">Already have an account? <Link className="auth-link" to="/login">Log in</Link></p>
+  </section></AuthPageLayout>
 }

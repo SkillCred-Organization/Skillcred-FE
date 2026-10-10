@@ -1,14 +1,15 @@
-import { useState } from 'react'
 import { Award, Code, Folder, House, LogOut, PanelLeft, ShieldCheck, Share2, SlidersHorizontal, Star } from 'lucide-react'
 import Avatar from '../ui/Avatar'
+import { useAuth } from '../../features/auth/authContext'
 import NavItem from './NavItem'
-import { mockCounts, mockUser } from '../../lib/mockData'
-import LogoutModal from './LogoutModal'
+import { mockCounts } from '../../lib/mockData'
 
 type SidebarProps = { collapsed: boolean; onToggle: () => void }
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const [loggingOut, setLoggingOut] = useState(false)
+  const { user, logout } = useAuth()
+  const name = user?.fullName?.trim() || 'Your account'
+  const initials = name.split(/\s+/).slice(0, 2).map(part => part[0]).join('')
   return (
     <aside
       className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-line bg-white p-3 transition-[width] md:flex ${
@@ -44,8 +45,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <NavItem to="/app/settings" icon={SlidersHorizontal} label="Settings" collapsed={collapsed} />
         <button
           type="button"
-
-          onClick={() => setLoggingOut(true)}
+          onClick={logout}
           className={`flex h-10 items-center gap-3 rounded-lg text-sm text-ink-muted hover:bg-cream ${
             collapsed ? 'justify-center' : 'px-3'
           }`}
@@ -55,16 +55,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </button>
 
         <div className={`mt-2 flex items-center gap-3 border-t border-line pt-3 ${collapsed ? 'justify-center' : 'px-2'}`}>
-          <Avatar initials={mockUser.initials} />
+          <Avatar initials={initials} />
           {!collapsed && (
             <div className="min-w-0 text-sm">
-              <p className="truncate font-medium text-ink">{mockUser.name}</p>
-              <p className="text-xs text-ink-muted">{mockUser.role}</p>
+              <p className="truncate font-medium text-ink">{name}</p>
+              <p className="text-xs text-ink-muted">{user?.role === 'admin' ? 'Institution admin' : 'Learner'}</p>
             </div>
           )}
         </div>
       </div>
-      {loggingOut && <LogoutModal onClose={() => setLoggingOut(false)} />}
     </aside>
   )
 }

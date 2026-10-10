@@ -6,7 +6,7 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import { saveOnboarding } from "../../lib/api";
-import { mockUser } from "../../lib/mockData";
+import { useAuth } from "../auth/authContext";
 import type { Institution } from "../../types";
 import InstitutionPicker from "./InstitutionPicker";
 
@@ -65,6 +65,7 @@ const copy = [
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [institution, setInstitution] = useState<Institution | null>(null);
   const [institutionError, setInstitutionError] = useState("");
@@ -161,7 +162,7 @@ export default function OnboardingPage() {
               <Input
                 label="Full name"
                 icon={<User className="size-4" />}
-                defaultValue={mockUser.name}
+                defaultValue={user?.fullName ?? ""}
                 helperText="Taken from your sign-up"
                 disabled
               />
