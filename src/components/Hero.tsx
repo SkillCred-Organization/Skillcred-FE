@@ -1,4 +1,4 @@
-import { BookOpenText, Globe2, Laptop, ShieldCheck, Star } from "lucide-react";
+import { BookOpenText, Globe2, Laptop, Pen, ShieldCheck, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProfileCard from "./ProfileCard";
 
@@ -40,6 +40,7 @@ export default function Hero() {
             <BookOpenText className="hero-decoration hero-book" strokeWidth={1.5} />
             <Laptop className="hero-decoration hero-laptop" strokeWidth={1.5} />
             <Globe2 className="hero-decoration hero-globe" strokeWidth={1.5} />
+            <Pen className="hero-decoration hero-pen" strokeWidth={1.5} />
             {decorativeStars.map((star) => (
               <Star key={star} className={`hero-star hero-star-${star}`} />
             ))}

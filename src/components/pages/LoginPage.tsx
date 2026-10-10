@@ -25,9 +25,9 @@ export default function LoginPage() {
   function success(response: AuthResponse, flow: 'login' | 'signup' = 'login') {
     navigate(authDestination(acceptSession(response), flow), { replace: true })
   }
-  function failure(error: unknown) {
+  function failure(error: unknown, method: 'password' | 'google' = 'password') {
     const apiError = applyFieldErrors(error, setError, ['email', 'password'])
-    const invalid = apiError.status === 401 && !apiError.code?.startsWith('GOOGLE')
+    const invalid = method === 'password' && apiError.status === 401 && !apiError.code?.startsWith('GOOGLE')
     setInvalidCredentials(invalid)
     if (invalid) {
       setMessage('That email and password don’t match.')
@@ -50,7 +50,7 @@ export default function LoginPage() {
     if (!acceptedTerms) { setMessage('Accept the Terms and Privacy Policy to continue.'); return }
     setSetupBusy(true); setMessage('')
     try { success(await authApi.google({ credential: googleCredential, role, acceptedTerms }), 'signup') }
-    catch (error) { failure(error) }
+    catch (error) { failure(error, 'google') }
     finally { setSetupBusy(false) }
   }
   return <AuthPageLayout><section className={`auth-panel auth-login ${message ? 'has-error' : ''}`}>
@@ -65,7 +65,7 @@ export default function LoginPage() {
       <Agreement checked={acceptedTerms} disabled={setupBusy} onChange={e => { setAcceptedTerms(e.target.checked); if (e.target.checked) setMessage('') }}><TermsText /></Agreement>
       <AuthSubmit busy={setupBusy} busyText="Creating account…">Create account</AuthSubmit>
     </form> : <>
-      <GoogleAuthButton label="Log in with Google" disabled={isSubmitting} onBusyChange={setGoogleBusy} onCredential={googleSignIn} onError={failure} />
+      <GoogleAuthButton label="Log in with Google" disabled={isSubmitting} onBusyChange={setGoogleBusy} onCredential={googleSignIn} onError={error => failure(error, 'google')} />
       {!message && <AuthDivider />}
       <form className="auth-form" noValidate aria-busy={isSubmitting} onSubmit={handleSubmit(submit)}>
         <fieldset className="auth-fields" disabled={isSubmitting || googleBusy}>

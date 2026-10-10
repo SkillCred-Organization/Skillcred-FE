@@ -31,29 +31,36 @@ export const tokenStore = {
 
 
 // Public auth requests opt out of Bearer headers; protected expiry notifies the router.
-type ApiOptions = RequestInit & { auth?: boolean }
+type ApiOptions = RequestInit & { auth?: boolean; timeoutMs?: number }
 
 export function apiUrl(endpoint: string, base = API_BASE_URL) {
   if (!endpoint.startsWith('/api/')) throw new Error('API endpoints must start with /api/.')
   return base.replace(/\/+$/, '').replace(/\/api$/, '') + endpoint
 }
 
-export async function apiClient<T>(endpoint: string, { auth = true, ...options }: ApiOptions = {}): Promise<T> {
+export async function apiClient<T>(endpoint: string, { auth = true, timeoutMs = 20000, ...options }: ApiOptions = {}): Promise<T> {
   const token = auth ? tokenStore.get() : null
   const headers = new Headers(options.headers)
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json')
   headers.set('Accept', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
+  const timeoutSignal = AbortSignal.timeout(timeoutMs)
+  const signal = options.signal ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal
   let response: Response
+  let data
   try {
-    response = await fetch(apiUrl(endpoint), {
-      ...options, headers, signal: options.signal ?? AbortSignal.timeout(20000),
+    response = await fetch(apiUrl(endpoint), { ...options, headers, signal })
+    data = await response.json().catch(error => {
+      if (signal.aborted) throw error
+      return null
     })
   } catch (error) {
     if (options.signal?.aborted) throw error
+    if (timeoutSignal.aborted) {
+      throw new ApiError(0, 'SkillCred is taking longer than expected to respond. Please try again.', 'REQUEST_TIMEOUT')
+    }
     throw new ApiError(0, 'We couldn’t reach SkillCred. Please try again shortly.', 'NETWORK_ERROR')
   }
-  const data = await response.json().catch(() => null)
   if (!response.ok) {
     if (response.status === 401 && token && tokenStore.get() === token) {
       tokenStore.clear()

@@ -187,3 +187,74 @@ test('a taken profile handle preserves the signed-in session and the server erro
   await assert.rejects(learnerProfileApi.saveHandle('taken'), error => error instanceof ApiError && error.status === 409)
   assert.equal(readStoredUser().id, session.user.id)
 })
+
+function useMockRequestClock(t) {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  t.mock.method(AbortSignal, 'timeout', milliseconds => {
+    const controller = new AbortController()
+    setTimeout(() => controller.abort(new DOMException('Request timed out', 'TimeoutError')), milliseconds)
+    return controller.signal
+  })
+}
+function respondAfter(milliseconds, response = session) {
+  globalThis.fetch = (url, options) => {
+    requests.push({ url, ...options })
+    return new Promise((resolve, reject) => {
+      const cancel = () => reject(options.signal.reason)
+      options.signal.addEventListener('abort', cancel, { once: true })
+      setTimeout(() => {
+        options.signal.removeEventListener('abort', cancel)
+        resolve(new Response(JSON.stringify(response), { headers: { 'Content-Type': 'application/json' } }))
+      }, milliseconds)
+    })
+  }
+}
+test('login, signup and Google wait for a slow first response without sending duplicates', async t => {
+  useMockRequestClock(t)
+  respondAfter(45000)
+  const responses = Promise.all([
+    authApi.login({ email: 'learner@example.test', password: 'TestPass123' }),
+    authApi.registerLearner({ fullName: 'Test', email: 'learner@example.test', password: 'TestPass123', acceptedTerms: true }),
+    authApi.google({ credential: 'google-test' }),
+  ])
+  t.mock.timers.tick(45000)
+  for (const result of await responses) assert.deepEqual(result, session)
+  assert.equal(requests.length, 3)
+})
+test('a hung session refresh still times out when it has a cancellation signal', async t => {
+  useMockRequestClock(t)
+  saveSession(session)
+  respondAfter(120000)
+  const caller = new AbortController()
+  const rejected = assert.rejects(authApi.me(caller.signal), error => error.code === 'REQUEST_TIMEOUT')
+  t.mock.timers.tick(90000)
+  await rejected
+  assert.equal(requests.length, 1)
+  assert.equal(caller.signal.aborted, false)
+  assert.equal(readStoredUser().id, session.user.id)
+})
+test('navigation cancellation is preserved instead of becoming a connection error', async t => {
+  useMockRequestClock(t)
+  respondAfter(45000)
+  const caller = new AbortController()
+  const reason = new DOMException('Page closed', 'AbortError')
+  const rejected = assert.rejects(authApi.me(caller.signal), error => error === reason)
+  caller.abort(reason)
+  await rejected
+  assert.equal(requests.length, 1)
+})
+test('a stalled response body reports a timeout and preserves the session', async t => {
+  useMockRequestClock(t)
+  saveSession(session)
+  globalThis.fetch = async (_url, options) => ({
+    ok: true, status: 200,
+    json: () => new Promise((_resolve, reject) => {
+      options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true })
+    }),
+  })
+  const rejected = assert.rejects(authApi.me(), error => error.code === 'REQUEST_TIMEOUT')
+  await Promise.resolve()
+  t.mock.timers.tick(90000)
+  await rejected
+  assert.equal(readStoredUser().id, session.user.id)
+})
