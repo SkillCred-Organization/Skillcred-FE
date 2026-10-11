@@ -4,7 +4,8 @@ import { Award, Bell, ChevronRight, Code, LogOut, Share2, SlidersHorizontal, Sta
 import type { LucideIcon } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import LogoutModal from '../../components/layout/LogoutModal'
-import { mockUser } from '../../lib/mockData'
+import { useDisplayUser } from '../auth/useDisplayUser'
+
 
 type Item = { to: string; label: string; icon: LucideIcon }
 
@@ -40,6 +41,7 @@ function Group({ title, items }: { title: string; items: Item[] }) {
 }
 
 export default function ProfilePage() {
+      const user = useDisplayUser()
   const [loggingOut, setLoggingOut] = useState(false)
 
   return (
@@ -47,10 +49,10 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-semibold text-ink">Profile</h1>
 
       <div className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-white p-4">
-        <Avatar initials={mockUser.initials} size="lg" />
+        <Avatar initials={user.initials} size="lg" />
         <div>
-          <p className="font-medium text-ink">{mockUser.name}</p>
-          <p className="text-sm text-ink-muted">{mockUser.role}</p>
+          <p className="font-medium text-ink">{user.name}</p>
+          <p className="text-sm text-ink-muted">{user.role}</p>
         </div>
       </div>
 
