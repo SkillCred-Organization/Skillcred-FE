@@ -17,6 +17,7 @@ import LegalPage from "./components/pages/LegalPage";
 import RequireAuth from "./features/auth/RequireAuth";
 import ProjectsPage from "./features/projects/ProjectsPage";
 import OnboardingPage from "./features/onboarding/OnboardingPage";
+import ProfilePage from './features/profile/ProfilePage'
 
 const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>;
 
@@ -48,7 +49,7 @@ export default function App() {
         <Route path="verification" element={stub("Verification")} />
         <Route path="share" element={stub("Share profile")} />
         <Route path="settings" element={stub("Settings")} />
-        <Route path="profile" element={stub("Profile")} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
       </Route>
     </Routes>

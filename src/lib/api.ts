@@ -1,5 +1,6 @@
-import { mockProjects, mockVerification, mockInstitutions} from './mockData'
+import { mockProjects, mockVerification} from './mockData'
 import type { NewProject, Project, Institution, OnboardingData } from '../types'
+import { apiClient } from './apiClient'
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -31,12 +32,13 @@ export async function addProject(input: NewProject): Promise<Project> {
   return project
 }
 
-// MOCK. Real version: GET /api/learner/institutions?q=  (returns { institutions: [{ _id, name }] })
-// When switched, I will convert _id to id here so the pages never see the difference.
+type InstitutionsResponse = { institutions: { _id: string; name: string }[] }
+
 export async function searchInstitutions(query: string): Promise<Institution[]> {
-  await wait(250)
-  const q = query.trim().toLowerCase()
-  return mockInstitutions.filter((i) => i.name.toLowerCase().includes(q))
+  const data = await apiClient<InstitutionsResponse>(
+    `/api/learner/institutions?q=${encodeURIComponent(query.trim())}`,
+  )
+  return data.institutions.map((i) => ({ id: i._id, name: i.name })) // _id becomes id here, so pages never see _id
 }
 
 // The only keys PATCH /api/learner/profile accepts. Any extra key returns a 400.
@@ -67,9 +69,8 @@ export function buildProfilePayload(data: OnboardingData): ProfilePayload {
 }
 
 export async function saveOnboarding(data: OnboardingData): Promise<void> {
-  const payload = buildProfilePayload(data)
-  await wait(700)
-  // MOCK. Real version, once login gives us a token:
-  // await apiClient('/api/learner/profile', { method: 'PATCH', body: JSON.stringify(payload) })
-  console.log('Would send PATCH /api/learner/profile:', payload)
+  await apiClient('/api/learner/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(buildProfilePayload(data)),
+  })
 }

@@ -21,16 +21,23 @@ export default function InstitutionPicker({
   const [unlisted, setUnlisted] = useState(value !== null && value.id === null);
 
   // Search whenever the typed text changes (skipped when the learner types their own name)
-  useEffect(() => {
-    if (unlisted) return;
-    let cancelled = false;
-    searchInstitutions(query).then((found) => {
-      if (!cancelled) setResults(found);
-    });
+    useEffect(() => {
+    if (unlisted) return
+    let cancelled = false
+    const timer = setTimeout(() => {
+      searchInstitutions(query)
+        .then((found) => {
+          if (!cancelled) setResults(found)
+        })
+        .catch(() => {
+          if (!cancelled) setResults([])
+        })
+    }, 300)
     return () => {
-      cancelled = true;
-    };
-  }, [query, unlisted]);
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [query, unlisted])
 
   function handleType(text: string) {
     setQuery(text);
