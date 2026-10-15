@@ -97,6 +97,16 @@ test('learners cannot enter admin pages', async ({ page }) => {
   await expect(page).toHaveURL(/\/app\/dashboard$/)
 })
 
+test('learners without a profile complete onboarding before opening dashboard or settings', async ({ page }) => {
+  await mockBackend(page, { role: 'learner' })
+  await page.route('**/api/learner/profile', route => route.fulfill({ json: { profile: null } }))
+  for (const path of ['/app/dashboard', '/app/settings']) {
+    await page.goto(path)
+    await expect(page).toHaveURL(/\/onboarding$/)
+    await expect(page.getByRole('heading', { name: 'Tell us about you' })).toBeVisible()
+  }
+})
+
 test('admins are routed from learner settings to their own dashboard', async ({ page }) => {
   await mockBackend(page)
   await page.goto('/app/settings')
