@@ -11,6 +11,7 @@ import { mockVerification } from "../../lib/mockData";
 import type { NewProject, Project, Teammate } from "../../types";
 import OptionList from "../../components/ui/OptionsList";
 import { tracks } from "../../lib/options";
+import InlineAlert from "../../components/ui/InlineAlert";
 
 type FormValues = {
   title: string;
@@ -321,10 +322,9 @@ export default function AddProjectModal({
           )}
 
           {submitError && (
-            <p className="text-sm text-error">
-              Couldn&apos;t save your project. Check your connection and try
-              again.
-            </p>
+            <InlineAlert variant="error" title="Couldn't save your project">
+              Check your connection and try again.
+            </InlineAlert>
           )}
         </div>
       )}

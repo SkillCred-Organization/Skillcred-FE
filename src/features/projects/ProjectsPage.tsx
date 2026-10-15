@@ -8,6 +8,8 @@ import { getProjects } from '../../lib/api'
 import type { Project, Status } from '../../types'
 import ProjectRow from './ProjectRow'
 import AddProjectModal from './AddProjectModal'
+import { useToast } from '../../components/ui/toastContext'
+import { announceProjectAdded } from './projectToast'
 
 type Filter = 'all' | Status
 
@@ -25,6 +27,7 @@ export default function ProjectsPage() {
   const [attempt, setAttempt] = useState(0)
   const [filter, setFilter] = useState<Filter>('all')
   const [adding, setAdding] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     getProjects()
@@ -43,7 +46,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="mb-6 flex items-start justify-between gap-4">
+      <header className=" mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-ink">Projects</h1>
           <p className="text-sm text-ink-muted">Work you built, with proof. Verified projects carry the most weight.</p>
@@ -115,7 +118,10 @@ export default function ProjectsPage() {
   {adding && (
     <AddProjectModal
       onClose={() => setAdding(false)}
-      onCreated={(project) => setProjects((list) => [project, ...(list ?? [])])}
+        onCreated={(project) => {
+    setProjects((list) => [project, ...(list ?? [])])
+    announceProjectAdded(toast, project)
+  }}
     />
   )}
     </div>
