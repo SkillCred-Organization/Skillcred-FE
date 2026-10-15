@@ -1,18 +1,20 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Plus, Search, User, X } from "lucide-react";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
-import OptionList from "../../components/ui/OptionsList";
-import Select from "../../components/ui/Select";
-import { ApiError } from "../../lib/apiClient";
-import { saveOnboarding } from "../../lib/api";
-import { programmes, tracks } from "../../lib/options";
-import type { Institution } from "../../types";
-import { useDisplayUser } from "../auth/useDisplayUser";
-import InstitutionPicker from "./InstitutionPicker";
 import InlineAlert from "../../components/ui/InlineAlert";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { ChevronLeft, MapPin, Plus, Search, User, X } from 'lucide-react'
+import Button from '../../components/ui/Button'
+import Input from '../../components/ui/Input'
+import OptionList from '../../components/ui/OptionsList'
+import Select from '../../components/ui/Select'
+import { ApiError } from '../../lib/apiClient'
+import { saveOnboarding } from '../../lib/api'
+import { programmes, tracks } from '../../lib/options'
+import type { Institution } from '../../types'
+import { useDisplayUser } from '../auth/useDisplayUser'
+import InstitutionPicker from './InstitutionPicker'
+import { useAuth } from '../auth/authContext'
+import { onboardingKey } from './useOnboardingGate'
 
 type FormValues = {
   headline: string;
@@ -70,15 +72,16 @@ const copy = [
 ];
 
 export default function OnboardingPage() {
-  const navigate = useNavigate();
-  const user = useDisplayUser();
-  const [step, setStep] = useState(0);
-  const [institution, setInstitution] = useState<Institution | null>(null);
-  const [institutionError, setInstitutionError] = useState("");
-  const [skills, setSkills] = useState<string[]>([]);
-  const [skillQuery, setSkillQuery] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
+  const navigate = useNavigate()
+  const user = useDisplayUser() 
+  const { user: authUser } = useAuth()
+  const [step, setStep] = useState(0)
+  const [institution, setInstitution] = useState<Institution | null>(null)
+  const [institutionError, setInstitutionError] = useState('')
+  const [skills, setSkills] = useState<string[]>([])
+  const [skillQuery, setSkillQuery] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const {
     register,
@@ -114,8 +117,9 @@ export default function OnboardingPage() {
     setSaving(true);
     setSaveError("");
     try {
-      await saveOnboarding({ ...getValues(), institution, skills });
-      navigate("/app/dashboard");
+      await saveOnboarding({ ...getValues(), institution, skills }) 
+        if (authUser) localStorage.setItem(onboardingKey(authUser.id), '1')
+      navigate('/app/dashboard')
     } catch (err) {
       setSaving(false);
       setSaveError(

@@ -2,10 +2,22 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import MobileTabBar from './MobileTabBar'
 import Sidebar from './Sidebar'
+import { useOnboardingGate } from '../../features/onboarding/useOnboardingGate'
+
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const settings = useLocation().pathname === '/app/settings'
+
+    const checking = useOnboardingGate()
+
+  if (checking) {
+    return (
+      <div role="status" className="flex min-h-screen items-center justify-center bg-page text-sm text-ink-muted">
+        Loading your account…
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-page">

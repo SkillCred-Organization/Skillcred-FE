@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Info, Link2, Plus, X } from "lucide-react";
 import Button from "../../components/ui/Button";
@@ -6,12 +6,13 @@ import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
 import Stepper from "../../components/ui/Stepper";
 import Toggle from "../../components/ui/Toggle";
-import { addProject } from "../../lib/api";
-import { mockVerification } from "../../lib/mockData";
+import { addProject, getProfile } from "../../lib/api";
 import type { NewProject, Project, Teammate } from "../../types";
-import OptionList from "../../components/ui/OptionsList";
-import { tracks } from "../../lib/options";
+// import OptionList from "../../components/ui/OptionsList";
+// import { tracks } from "../../lib/options";
 import InlineAlert from "../../components/ui/InlineAlert";
+import Select from "../../components/ui/Select";
+import { projectTracks } from "../../lib/options";
 
 type FormValues = {
   title: string;
@@ -55,6 +56,17 @@ export default function AddProjectModal({
   const [askVerification, setAskVerification] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+
+  const [institutionName, setInstitutionName] = useState("your institution");
+
+  useEffect(() => {
+    getProfile()
+      .then(({ profile }) => {
+        if (profile?.institution?.name)
+          setInstitutionName(profile.institution.name);
+      })
+      .catch(() => {});
+  }, []);
 
   const {
     register,
@@ -159,16 +171,19 @@ export default function AddProjectModal({
               error={errors.role?.message}
               {...register("role", { required: "Add your role" })}
             />
-            <Input
+            <Select
               label="Track"
-              list="project-track-options"
-              placeholder="Choose or type"
-              autoComplete="off"
+              placeholder="Choose a track"
               error={errors.track?.message}
-              {...register("track", { required: "Add a track" })}
-            />
+              {...register("track", { required: "Choose a track" })}
+            >
+              {projectTracks.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </Select>
           </div>
-          <OptionList id="project-track-options" options={tracks} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="Start"
@@ -306,7 +321,7 @@ export default function AddProjectModal({
             <Toggle
               checked={askVerification}
               onChange={setAskVerification}
-              label={`Ask ${mockVerification.institution} to verify this`}
+              label={`Ask ${institutionName} to verify this`}
               description="Shows as Pending until they review it. Turn off to add it as Self-reported."
             />
           </div>
