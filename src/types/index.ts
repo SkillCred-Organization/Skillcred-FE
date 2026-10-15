@@ -47,3 +47,12 @@ export type OnboardingData = {
   year: string
   skills: string[]
 }
+
+export type LearnerProfile = {
+  headline?: string
+  location?: string
+  bio?: string
+  handle?: string
+  skills?: string[]
+  institution?: { institutionId?: string; name?: string; programme?: string; cohort?: string }
+}
