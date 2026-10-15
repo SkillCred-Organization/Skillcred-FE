@@ -1,9 +1,11 @@
 import { Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import AuthPageLayout from './AuthPageLayout'
 import { useAuth } from '../../features/auth/authContext'
 export default function AccountStatusPage() {
   const { user } = useAuth()
+  if (user?.role === 'admin') return <Navigate to="/admin/dashboard" replace />
   return <AuthPageLayout><section className="auth-panel auth-status">
     <div className="auth-status-icon"><Mail aria-hidden="true" /></div>
     <h1>{user?.needsInstitution ? 'Institution details needed' : 'Pending review'}</h1>
