@@ -14,6 +14,7 @@ export default function LogoutModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal
+      compact
       title="Log out of SkillCred?"
       onClose={onClose}
       footer={

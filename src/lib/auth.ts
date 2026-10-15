@@ -7,6 +7,8 @@ export type AuthUser = {
   role: 'learner' | 'admin'
   emailVerified: boolean
   needsInstitution?: boolean
+  institutionId?: string | null
+  institutionRole?: 'owner' | 'reviewer' | null
 }
 export type AuthResponse = { token: string; user: AuthUser; institution?: { id: string; name: string; status: string } }
 export type LearnerRegistration = { fullName: string; email: string; password: string; acceptedTerms: boolean }
@@ -60,11 +62,12 @@ export function saveSession({ token, user }: AuthResponse) {
 }
 
 export function authDestination(user: AuthUser, flow: 'login' | 'signup' = 'login') {
+  if (user.role === 'admin') {
+    if (!user.emailVerified) return '/verify-email'
+    return '/admin/dashboard'
+  }
   if (flow === 'login') return '/app/dashboard'
-  if (user.role === 'learner') return '/onboarding'
-  if (user.needsInstitution) return '/account-status'
-  if (!user.emailVerified) return '/verify-email'
-  return '/app/dashboard'
+  return '/onboarding'
 }
 
 export function websiteDomain(value: string) {

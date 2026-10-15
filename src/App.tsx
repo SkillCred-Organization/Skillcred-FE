@@ -18,6 +18,13 @@ import RequireAuth from "./features/auth/RequireAuth";
 import ProjectsPage from "./features/projects/ProjectsPage";
 import OnboardingPage from "./features/onboarding/OnboardingPage";
 import ProfilePage from './features/profile/ProfilePage'
+import AdminLayout, { AdminProfile } from './features/admin/AdminLayout'
+import { AdminDashboard, ClaimReview, ReviewQueue } from './features/admin/ReviewPages'
+import LearnersPage from './features/admin/LearnersPage'
+import InstitutionPage from './features/admin/InstitutionPage'
+import AdminSettings, { AdminNotifications } from './features/admin/AdminSettings'
+import SettingsPage from './features/settings/SettingsPage'
+import TeammateConfirmationPage from './components/pages/TeammateConfirmationPage'
 
 const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>;
 
@@ -37,7 +44,22 @@ export default function App() {
       <Route path="/account-status" element={<AccountStatusPage />} />
       <Route path="/terms" element={<LegalPage />} />
       <Route path="/privacy" element={<LegalPage privacy />} />
-      <Route element={<RequireAuth />}>
+      <Route path="/confirm-teammate" element={<TeammateConfirmationPage />} />
+      <Route path="/verification" element={<Navigate to="/app/verification" replace />} />
+      <Route element={<RequireAuth role="admin" />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="queue" element={<ReviewQueue />} />
+          <Route path="claims/:claimId" element={<ClaimReview />} />
+          <Route path="learners" element={<LearnersPage />} />
+          <Route path="institution" element={<InstitutionPage />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="profile" element={<AdminProfile />} />
+        </Route>
+      </Route>
+      <Route element={<RequireAuth role="learner" />}>
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/app" element={<AppLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -48,7 +70,7 @@ export default function App() {
         <Route path="achievements" element={stub("Achievements")} />
         <Route path="verification" element={stub("Verification")} />
         <Route path="share" element={stub("Share profile")} />
-        <Route path="settings" element={stub("Settings")} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
       </Route>
