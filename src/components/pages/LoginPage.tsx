@@ -9,6 +9,7 @@ import { authApi, authDestination, type AuthResponse, type AuthUser } from '../.
 import { ApiError } from '../../lib/apiClient'
 import { applyFieldErrors, emailRules } from '../../lib/authForm'
 import { useAuth } from '../../features/auth/authContext'
+import { trackEvent } from '../../lib/analytics'
 
 type LoginValues = { email: string; password: string }
 export default function LoginPage() {
@@ -22,8 +23,9 @@ export default function LoginPage() {
   const [setupBusy, setSetupBusy] = useState(false)
   const { acceptSession } = useAuth()
   const navigate = useNavigate()
-  function success(response: AuthResponse, flow: 'login' | 'signup' = 'login') {
+  function success(response: AuthResponse, flow: 'login' | 'signup' = 'login', method: 'password' | 'google' = 'password') {
     navigate(authDestination(acceptSession(response), flow), { replace: true })
+    trackEvent(flow === 'signup' ? 'sign_up' : 'login', { method, account_type: response.user.role })
   }
   function failure(error: unknown, method: 'password' | 'google' = 'password') {
     const apiError = applyFieldErrors(error, setError, ['email', 'password'])
@@ -40,7 +42,7 @@ export default function LoginPage() {
   }
   async function googleSignIn(credential: string) {
     setMessage(''); setInvalidCredentials(false)
-    try { success(await authApi.google({ credential })) }
+    try { success(await authApi.google({ credential }), 'login', 'google') }
     catch (error) {
       if (error instanceof ApiError && ['ROLE_REQUIRED', 'TERMS_REQUIRED'].includes(error.code ?? '')) setGoogleCredential(credential)
       else throw error
@@ -49,7 +51,7 @@ export default function LoginPage() {
   async function completeGoogle() {
     if (!acceptedTerms) { setMessage('Accept the Terms and Privacy Policy to continue.'); return }
     setSetupBusy(true); setMessage('')
-    try { success(await authApi.google({ credential: googleCredential, role, acceptedTerms }), 'signup') }
+    try { success(await authApi.google({ credential: googleCredential, role, acceptedTerms }), 'signup', 'google') }
     catch (error) { failure(error, 'google') }
     finally { setSetupBusy(false) }
   }

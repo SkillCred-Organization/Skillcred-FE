@@ -1,19 +1,21 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Plus, Search, User, X } from "lucide-react";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
-import OptionList from "../../components/ui/OptionsList";
-import Select from "../../components/ui/Select";
-import { ApiError } from "../../lib/apiClient";
-import { saveOnboarding } from "../../lib/api";
-import { programmes, tracks } from "../../lib/options";
-import type { Institution } from "../../types";
-import { useDisplayUser } from "../auth/useDisplayUser";
-import InstitutionPicker from "./InstitutionPicker";
-import { useAuth } from "../auth/authContext";
-import { onboardingKey } from "./useOnboardingGate";
+import InlineAlert from "../../components/ui/InlineAlert";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { ChevronLeft, MapPin, Plus, Search, User, X } from 'lucide-react'
+import Button from '../../components/ui/Button'
+import Input from '../../components/ui/Input'
+import OptionList from '../../components/ui/OptionsList'
+import Select from '../../components/ui/Select'
+import { ApiError } from '../../lib/apiClient'
+import { saveOnboarding } from '../../lib/api'
+import { programmes, tracks } from '../../lib/options'
+import type { Institution } from '../../types'
+import { useDisplayUser } from '../auth/useDisplayUser'
+import InstitutionPicker from './InstitutionPicker'
+import { useAuth } from '../auth/authContext'
+import { onboardingKey } from './useOnboardingGate'
+
 
 type FormValues = {
   headline: string;
@@ -212,7 +214,8 @@ export default function OnboardingPage() {
                 helperText="Bootcamps and short courses can leave this empty"
                 autoComplete="off"
                 {...register("programme")}
-              />
+                />
+                
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Track"
@@ -296,8 +299,14 @@ export default function OnboardingPage() {
               </ul>
 
               {saveError && (
-                <p className="mt-4 text-sm text-error">{saveError}</p>
-              )}
+                                <InlineAlert
+                  variant="error"
+                  title="Couldn't save your profile"
+                  className="mt-4"
+                >
+                  {saveError}
+                </InlineAlert>
+ )}
             </div>
           )}
 

@@ -8,6 +8,7 @@ import { Agreement, AuthAlert, AuthDivider, AuthField, AuthSubmit, TermsText } f
 import { authApi, authDestination, type LearnerRegistration } from '../../lib/auth'
 import { applyFieldErrors, emailRules, nameRules, passwordRules } from '../../lib/authForm'
 import { useAuth } from '../../features/auth/authContext'
+import { trackEvent } from '../../lib/analytics'
 
 export default function SignupPage() {
   const { register, control, handleSubmit, setError, clearErrors, trigger, getValues, formState: { errors, isSubmitting } } = useForm<LearnerRegistration>({ defaultValues: { fullName: '', email: '', password: '', acceptedTerms: false } })
@@ -25,6 +26,7 @@ export default function SignupPage() {
     try {
       const response = await authApi.registerLearner({ ...values, fullName: values.fullName.trim() })
       navigate(authDestination(acceptSession(response), 'signup'), { replace: true })
+      trackEvent('sign_up', { method: 'password', account_type: 'learner' })
     } catch (error) { failure(error) }
   }
   return <AuthPageLayout><section className="auth-panel auth-signup">
@@ -35,6 +37,7 @@ export default function SignupPage() {
       setMessage('')
       const response = await authApi.google({ credential, role: 'learner', acceptedTerms: getValues('acceptedTerms') })
       navigate(authDestination(acceptSession(response), 'signup'), { replace: true })
+      trackEvent('sign_up', { method: 'google', account_type: response.user.role })
     }} />
     <AuthDivider />
     <form className="auth-form" noValidate aria-busy={isSubmitting} onSubmit={handleSubmit(submit)}>

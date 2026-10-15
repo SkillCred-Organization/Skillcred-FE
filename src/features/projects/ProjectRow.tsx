@@ -12,11 +12,11 @@ const rowAction: Partial<Record<Status, string>> = {
 export default function ProjectRow({ project }: { project: Project }) {
   const action = rowAction[project.status]
   return (
-    <li className="flex items-center gap-4 rounded-xl border border-line bg-white p-4">
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-line bg-white p-4">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-cream text-ink-muted">
         <Code className="size-4" />
       </span>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-48">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-base font-semibold text-ink">{project.title}</h3>
           <Badge status={project.status} />
@@ -25,7 +25,7 @@ export default function ProjectRow({ project }: { project: Project }) {
         <p className="text-xs text-ink-muted">{project.meta}</p>
       </div>
       {action ? (
-        <Button variant="outline" size="sm">{action}</Button>
+        <Button variant="outline" size="sm" className="w-full sm:w-auto">{action}</Button>
       ) : (
         <ChevronRight className="size-4 text-ink-muted" />
       )}

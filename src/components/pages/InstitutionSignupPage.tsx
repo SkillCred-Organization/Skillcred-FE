@@ -5,8 +5,9 @@ import { Controller, useForm } from 'react-hook-form'
 import AuthPageLayout from './AuthPageLayout'
 import { Agreement, AuthAlert, AuthField, AuthSubmit, BackLink } from './AuthControls'
 import { authApi, emailMatchesWebsite, websiteDomain, type AdminRegistration } from '../../lib/auth'
-import { applyFieldErrors, emailRules, nameRules } from '../../lib/authForm'
+import { applyFieldErrors, emailRules, nameRules, passwordRules } from '../../lib/authForm'
 import { useAuth } from '../../features/auth/authContext'
+import { trackEvent } from '../../lib/analytics'
 
 const institutionFields = ['institutionName', 'website', 'registrationNumber'] as const
 const allFields = [...institutionFields, 'fullName', 'jobTitle', 'email', 'password', 'authorised'] as const
@@ -28,6 +29,7 @@ export default function InstitutionSignupPage() {
         registrationNumber: values.registrationNumber?.trim() || undefined,
       })
       acceptSession(response)
+      trackEvent('sign_up', { method: 'password', account_type: 'admin' })
       navigate('/verify-email', { replace: true, state: { email: values.email, institutionName: values.institutionName } })
     } catch (error) {
       const apiError = applyFieldErrors(error, setError, allFields)
@@ -68,7 +70,11 @@ export default function InstitutionSignupPage() {
             <AuthField label="Job title" placeholder="e.g. Programme lead" autoComplete="organization-title" {...register('jobTitle', { required: 'Enter your job title', validate: value => !!value.trim() || 'Enter your job title' })} error={errors.jobTitle?.message} />
           </div>
           <AuthField label="Work email" type="email" placeholder="you@institution.edu" autoComplete="email" icon={<Mail />} {...register('email', { ...emailRules, validate: value => emailMatchesWebsite(value, getValues('website')) || 'Your work email must use your institution’s website domain.' })} error={errors.email?.message} />
-          <AuthField label="Password" type="password" placeholder="Create a password" autoComplete="new-password" helperText="At least 8 characters" icon={<LockKeyhole />} {...register('password', { required: 'Create a password', minLength: { value: 8, message: 'Use at least 8 characters' } })} error={errors.password?.message} />
+          <AuthField label="Password" type="password" placeholder="Create a password" autoComplete="new-password" icon={<LockKeyhole />}
+            {...register('password', { ...passwordRules, onChange: () => { void trigger('password') } })}
+            error={errors.password && ['minLength', 'validate'].includes(errors.password.type)
+              ? 'Use at least 8 characters, including a number'
+              : errors.password?.message} />
         </>}
       </fieldset>
       {step === 2 && <Controller name="authorised" control={control} rules={{ validate: value => value === true || 'Confirm you are authorised to verify claims for this institution.' }} render={({ field }) => (

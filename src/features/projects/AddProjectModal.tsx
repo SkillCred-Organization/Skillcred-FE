@@ -8,6 +8,9 @@ import Stepper from "../../components/ui/Stepper";
 import Toggle from "../../components/ui/Toggle";
 import { addProject, getProfile } from "../../lib/api";
 import type { NewProject, Project, Teammate } from "../../types";
+// import OptionList from "../../components/ui/OptionsList";
+// import { tracks } from "../../lib/options";
+import InlineAlert from "../../components/ui/InlineAlert";
 import Select from "../../components/ui/Select";
 import { projectTracks } from "../../lib/options";
 
@@ -334,10 +337,9 @@ export default function AddProjectModal({
           )}
 
           {submitError && (
-            <p className="text-sm text-error">
-              Couldn&apos;t save your project. Check your connection and try
-              again.
-            </p>
+            <InlineAlert variant="error" title="Couldn't save your project">
+              Check your connection and try again.
+            </InlineAlert>
           )}
         </div>
       )}
