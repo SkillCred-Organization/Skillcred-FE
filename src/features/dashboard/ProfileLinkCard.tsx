@@ -4,6 +4,8 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { ApiError } from '../../lib/apiClient'
 import { learnerProfileApi, profileUrl, suggestedProfileHandle, type LearnerProfile } from '../../lib/profile'
+import { useToast } from '../../components/ui/toastContext'
+
 
 export default function ProfileLinkCard({ fullName }: { fullName: string }) {
   const [profile, setProfile] = useState<LearnerProfile | null>()
@@ -14,6 +16,7 @@ export default function ProfileLinkCard({ fullName }: { fullName: string }) {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const url = profileUrl(profile)
+  const toast = useToast()
 
   useEffect(() => {
     const controller = new AbortController()
@@ -31,14 +34,16 @@ export default function ProfileLinkCard({ fullName }: { fullName: string }) {
     return () => window.clearTimeout(timer)
   }, [copied])
 
-  async function copyLink() {
+    async function copyLink() {
     if (!url) return
     setError('')
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
+      toast.success('Link copied')
     } catch {
       setError('Could not copy the link. Select the address above to copy it manually.')
+      toast.error("Couldn't copy the link. Copy it from the box instead.")
     }
   }
 
