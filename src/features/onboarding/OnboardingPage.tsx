@@ -12,6 +12,8 @@ import { programmes, tracks } from '../../lib/options'
 import type { Institution } from '../../types'
 import { useDisplayUser } from '../auth/useDisplayUser'
 import InstitutionPicker from './InstitutionPicker'
+import { useAuth } from '../auth/authContext'
+import { onboardingKey } from './useOnboardingGate'
 
 type FormValues = { headline: string; location: string; programme: string; track: string; year: string }
 
@@ -49,7 +51,8 @@ const copy = [
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  const user = useDisplayUser()
+  const user = useDisplayUser() 
+  const { user: authUser } = useAuth()
   const [step, setStep] = useState(0)
   const [institution, setInstitution] = useState<Institution | null>(null)
   const [institutionError, setInstitutionError] = useState('')
@@ -86,7 +89,8 @@ export default function OnboardingPage() {
     setSaving(true)
     setSaveError('')
     try {
-      await saveOnboarding({ ...getValues(), institution, skills })
+      await saveOnboarding({ ...getValues(), institution, skills }) 
+        if (authUser) localStorage.setItem(onboardingKey(authUser.id), '1')
       navigate('/app/dashboard')
     } catch (err) {
       setSaving(false)
