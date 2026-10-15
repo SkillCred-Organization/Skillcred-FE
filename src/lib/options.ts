@@ -53,3 +53,10 @@ export const tracks = [
   'Technical Writing',
   'IT Support',
 ]
+
+export const projectTracks = [
+  { value: 'software_engineering', label: 'Software Engineering' },
+  { value: 'product_design', label: 'Product Design' },
+  { value: 'data_analysis', label: 'Data Analysis' },
+  { value: 'product_management', label: 'Product Management' },
+]

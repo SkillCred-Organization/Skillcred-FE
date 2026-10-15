@@ -1,5 +1,5 @@
 import { mockProjects, mockVerification} from './mockData'
-import type { NewProject, Project, Institution, OnboardingData } from '../types'
+import type { NewProject, Project, Institution, OnboardingData, LearnerProfile} from '../types'
 import { apiClient } from './apiClient'
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -69,8 +69,12 @@ export function buildProfilePayload(data: OnboardingData): ProfilePayload {
 }
 
 export async function saveOnboarding(data: OnboardingData): Promise<void> {
-  await apiClient('/api/learner/profile', {
-    method: 'PATCH',
-    body: JSON.stringify(buildProfilePayload(data)),
-  })
+  const payload = buildProfilePayload(data)
+  if (Object.keys(payload).length === 0) return // the learner skipped everything, so there's nothing to send
+  await apiClient('/api/learner/profile', { method: 'PATCH', body: JSON.stringify(payload) })
+}
+
+// GET /api/learner/profile gives { profile: {...} }, or { profile: null } for a learner with no profile yet
+export function getProfile() {
+  return apiClient<{ profile: LearnerProfile | null }>('/api/learner/profile')
 }
