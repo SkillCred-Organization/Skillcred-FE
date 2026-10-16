@@ -8,7 +8,7 @@ export type Status =
 
   export type Activity = {
   id: string
-  kind: 'verified' | 'confirmed' | 'needs-changes' | 'draft'
+  kind: 'verified' | 'confirmed' | 'needs-changes' | 'draft' | 'info'
   text: string
   time: string
   action?: string
@@ -75,4 +75,17 @@ export type ProjectDetail = Project & {
   techStack: string[]
   teammates: Teammate[]
   decision?: { reason: string; message: string }
+}
+
+export type DashboardStat = { total: number; verified: number }
+
+export type Dashboard = {
+  stats: {
+    projects: DashboardStat
+    certifications: DashboardStat
+    skills: DashboardStat
+    achievements: DashboardStat
+  }
+  banner: { verified: number; waiting: number; needsChanges: number }
+  activity: Activity[]
 }
