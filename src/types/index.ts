@@ -14,12 +14,20 @@ export type Status =
   action?: string
 }
 
+export type ProjectActions = {
+  edit: boolean
+  requestVerification: boolean
+  withdraw: boolean
+  delete: boolean
+}
+
 export type Project = {
   id: string
   title: string
   summary: string
   status: Status
   meta: string
+  actions: ProjectActions
 }
 
 export type Teammate = { name: string; email: string; role: string }
