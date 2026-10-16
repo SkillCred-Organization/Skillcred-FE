@@ -2,7 +2,6 @@ import { Award, Code, Folder, House, LogOut, PanelLeft, ShieldCheck, Share2, Sli
 import Avatar from '../ui/Avatar'
 import { useAuth } from '../../features/auth/authContext'
 import NavItem from './NavItem'
-import { mockCounts } from '../../lib/mockData'
 
 type SidebarProps = { collapsed: boolean; onToggle: () => void }
 
@@ -33,11 +32,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <p className="mt-4 px-3 text-[11px] font-medium uppercase tracking-wider text-ink-muted">Portfolio</p>
         )}
-        <NavItem to="/app/projects" icon={Folder} label="Projects" count={mockCounts.projects} collapsed={collapsed} />
-        <NavItem to="/app/certifications" icon={Award} label="Certifications" count={mockCounts.certifications} collapsed={collapsed} />
-        <NavItem to="/app/skills" icon={Code} label="Skills" count={mockCounts.skills} collapsed={collapsed} />
-        <NavItem to="/app/achievements" icon={Star} label="Achievements" count={mockCounts.achievements} collapsed={collapsed} />
-        <NavItem to="/app/verification" icon={ShieldCheck} label="Verification" count={mockCounts.verification} collapsed={collapsed} />
+        <NavItem to="/app/projects" icon={Folder} label="Projects" collapsed={collapsed} />
+        <NavItem to="/app/certifications" icon={Award} label="Certifications" collapsed={collapsed} />
+        <NavItem to="/app/skills" icon={Code} label="Skills" collapsed={collapsed} />
+        <NavItem to="/app/achievements" icon={Star} label="Achievements" collapsed={collapsed} />
+        <NavItem to="/app/verification" icon={ShieldCheck} label="Verification" collapsed={collapsed} />
       </nav>
 
       <div className="mt-auto flex flex-col gap-1">
