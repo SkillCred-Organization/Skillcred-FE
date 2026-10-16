@@ -64,3 +64,15 @@ export type LearnerProfile = {
   skills?: string[]
   institution?: { institutionId?: string; name?: string; programme?: string; cohort?: string }
 }
+
+export type ProjectDetail = Project & {
+  role: string
+  track: string
+  projectType: string
+  startDate: string
+  endDate: string
+  proofLink: string
+  techStack: string[]
+  teammates: Teammate[]
+  decision?: { reason: string; message: string }
+}

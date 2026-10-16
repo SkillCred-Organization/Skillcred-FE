@@ -11,3 +11,9 @@ export function timeAgo(iso?: string) {
   if (days < 30) return `${days} day${days === 1 ? '' : 's'} ago`
   return new Date(iso).toLocaleDateString()
 }
+
+export function formatMonth(iso?: string) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+}
