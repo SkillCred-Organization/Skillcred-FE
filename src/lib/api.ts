@@ -1,6 +1,6 @@
 import { apiClient } from './apiClient'
 import { timeAgo } from './format'
-import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status } from '../types'
+import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status, ProjectDetail} from '../types'
 
 // ---------- Profile and onboarding ----------
 
@@ -50,17 +50,24 @@ export function getProfile() {
 
 // ---------- Projects ----------
 
-type ApiProject = {
-  id?: string
-  _id?: string
-  title: string
-  summary?: string
-  status: string
-  teammates?: unknown[]
-  actions?: { edit?: boolean; requestVerification?: boolean; withdraw?: boolean; delete?: boolean }
-  createdAt?: string
-  updatedAt?: string
-}
+  type ApiProject = {
+    id?: string
+    _id?: string
+    title: string
+    summary?: string
+    status: string
+    role?: string
+    track?: string
+    startDate?: string
+    endDate?: string
+    proofLink?: string
+    details?: { projectType?: string; techStack?: string[] }
+    teammates?: { name?: string; email?: string; role?: string }[]
+    decision?: { reason?: string; messageToLearner?: string }
+    actions?: { edit?: boolean; requestVerification?: boolean; withdraw?: boolean; delete?: boolean }
+    createdAt?: string
+    updatedAt?: string
+  }
 
 const knownStatuses: Status[] = ['verified', 'team-confirmed', 'pending', 'needs-changes', 'self-reported', 'draft']
 
@@ -145,3 +152,34 @@ export async function requestVerification(id: string): Promise<Project> {
   })
   return toProject(data.item)
 }
+
+  function toProjectDetail(p: ApiProject): ProjectDetail {
+    const hasDecision = p.decision?.reason || p.decision?.messageToLearner
+    return {
+      ...toProject(p),
+      role: p.role ?? '',
+      track: p.track ?? '',
+      projectType: p.details?.projectType ?? '',
+      startDate: p.startDate ?? '',
+      endDate: p.endDate ?? '',
+      proofLink: p.proofLink ?? '',
+      techStack: p.details?.techStack ?? [],
+      teammates: (p.teammates ?? []).map((t) => ({ name: t.name ?? '', email: t.email ?? '', role: t.role ?? '' })),
+      decision: hasDecision
+        ? { reason: p.decision?.reason ?? '', message: p.decision?.messageToLearner ?? '' }
+        : undefined,
+    }
+  }
+
+  export async function getProject(id: string): Promise<ProjectDetail> {
+    const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}`)
+    return toProjectDetail(data.item)
+  }
+
+  export async function withdrawRequest(id: string): Promise<Project> {
+    const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}/withdraw`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+    return toProject(data.item)
+  }

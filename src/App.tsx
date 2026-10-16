@@ -25,6 +25,8 @@ import InstitutionPage from './features/admin/InstitutionPage'
 import AdminSettings, { AdminNotifications } from './features/admin/AdminSettings'
 import SettingsPage from './features/settings/SettingsPage'
 import TeammateConfirmationPage from './components/pages/TeammateConfirmationPage'
+import ProjectDetailPage from "./features/projects/ProjectDetailPage"
+
 
 const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>;
 
@@ -65,6 +67,7 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/:id" element={<ProjectDetailPage />} />
         <Route path="certifications" element={stub("Certifications")} />
         <Route path="skills" element={stub("Skills")} />
         <Route path="achievements" element={stub("Achievements")} />
