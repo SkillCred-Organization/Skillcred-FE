@@ -13,6 +13,7 @@ import { errorText } from '../../lib/errors'
 import { formatMonth } from '../../lib/format'
 import { projectTracks } from '../../lib/options'
 import type { ProjectDetail } from '../../types'
+import ProjectManageActions from './ProjectManageActions'
 
 function Timeline({ status }: { status: ProjectDetail['status'] }) {
   const sent = ['pending', 'needs-changes', 'verified', 'team-confirmed'].includes(status)
@@ -142,6 +143,7 @@ export default function ProjectDetailPage() {
               Withdraw request
             </Button>
           )}
+            <ProjectManageActions project={project} onUpdated={setProject} />
         </div>
       </header>
 
