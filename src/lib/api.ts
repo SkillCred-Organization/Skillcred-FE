@@ -1,6 +1,6 @@
 import { apiClient } from './apiClient'
 import { timeAgo } from './format'
-import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status, ProjectDetail} from '../types'
+import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status, ProjectDetail, Activity, Dashboard, DashboardStat} from '../types'
 
 // ---------- Profile and onboarding ----------
 
@@ -183,3 +183,65 @@ export async function requestVerification(id: string): Promise<Project> {
     })
     return toProject(data.item)
   }
+
+
+  // ---------- Dashboard ----------
+
+type ApiStat = { total?: number; verified?: number }
+type ApiActivity = {
+  id?: string
+  _id?: string
+  type?: string
+  kind?: string
+  event?: string
+  message?: string
+  text?: string
+  title?: string
+  description?: string
+  createdAt?: string
+  at?: string
+  date?: string
+}
+type ApiDashboard = {
+  stats?: { projects?: ApiStat; certifications?: ApiStat; skills?: ApiStat; achievements?: ApiStat }
+  banner?: { verified?: number; waiting?: number; needsChanges?: number }
+  recentActivity?: ApiActivity[]
+}
+
+function toStat(s?: ApiStat): DashboardStat {
+  return { total: s?.total ?? 0, verified: s?.verified ?? 0 }
+}
+
+// Picks an icon for an activity from its type name. Unknown types get a neutral icon.
+function activityKind(a: ApiActivity): Activity['kind'] {
+  const label = `${a.type ?? ''} ${a.kind ?? ''} ${a.event ?? ''}`.toLowerCase().replace(/[_-]/g, ' ')
+  if (/verified|approved/.test(label)) return 'verified'
+  if (/changes/.test(label)) return 'needs-changes'
+  if (/confirm/.test(label)) return 'confirmed'
+  if (/draft/.test(label)) return 'draft'
+  return 'info'
+}
+
+// The only place that knows the dashboard's backend shape. A wrong field name is fixed here.
+export async function getDashboard(): Promise<Dashboard> {
+  const data = await apiClient<ApiDashboard>('/api/learner/dashboard')
+  return {
+    stats: {
+      projects: toStat(data.stats?.projects),
+      certifications: toStat(data.stats?.certifications),
+      skills: toStat(data.stats?.skills),
+      achievements: toStat(data.stats?.achievements),
+    },
+    banner: {
+      verified: data.banner?.verified ?? 0,
+      waiting: data.banner?.waiting ?? 0,
+      needsChanges: data.banner?.needsChanges ?? 0,
+    },
+    activity: (data.recentActivity ?? []).map((a, i) => ({
+      id: String(a.id ?? a._id ?? i),
+      kind: activityKind(a),
+      text: a.message ?? a.text ?? a.title ?? a.description ?? 'Activity on your profile',
+      time: timeAgo(a.createdAt ?? a.at ?? a.date),
+    })),
+  }
+}
