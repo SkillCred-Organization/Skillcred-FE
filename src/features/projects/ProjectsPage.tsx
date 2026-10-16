@@ -4,11 +4,12 @@ import Button from '../../components/ui/Button'
 import ChoiceChip from '../../components/ui/ChoiceChip'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
-import { getProjects } from '../../lib/api'
-import type { Project, Status } from '../../types'
-import ProjectRow from './ProjectRow'
-import AddProjectModal from './AddProjectModal'
 import { useToast } from '../../components/ui/toastContext'
+import { getProjects, requestVerification } from '../../lib/api'
+import { errorText } from '../../lib/errors'
+import type { Project, Status } from '../../types'
+import AddProjectModal from './AddProjectModal'
+import ProjectRow from './ProjectRow'
 import { announceProjectAdded } from './projectToast'
 
 type Filter = 'all' | Status
@@ -22,12 +23,13 @@ const filters: { value: Filter; label: string }[] = [
 ]
 
 export default function ProjectsPage() {
+  const toast = useToast()
   const [projects, setProjects] = useState<Project[] | null>(null)
   const [error, setError] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [filter, setFilter] = useState<Filter>('all')
   const [adding, setAdding] = useState(false)
-  const toast = useToast()
+  const [requestingId, setRequestingId] = useState<string | null>(null)
 
   useEffect(() => {
     getProjects()
@@ -35,7 +37,20 @@ export default function ProjectsPage() {
       .catch(() => setError(true))
   }, [attempt])
 
-    const addButton = (
+  async function handleRequestVerification(id: string) {
+    setRequestingId(id)
+    try {
+      const updated = await requestVerification(id)
+      setProjects((list) => (list ?? []).map((p) => (p.id === id ? updated : p)))
+      toast.success('Sent to your institution for verification.')
+    } catch (err) {
+      toast.error(errorText(err, "Couldn't send this project. Please try again."))
+    } finally {
+      setRequestingId(null)
+    }
+  }
+
+  const addButton = (
     <Button icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
       Add project
     </Button>
@@ -46,7 +61,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className=" mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-ink">Projects</h1>
           <p className="text-sm text-ink-muted">Work you built, with proof. Verified projects carry the most weight.</p>
@@ -109,21 +124,27 @@ export default function ProjectsPage() {
           ) : (
             <ul className="space-y-3">
               {visible.map((p) => (
-                <ProjectRow key={p.id} project={p} />
+                <ProjectRow
+                  key={p.id}
+                  project={p}
+                  onRequestVerification={handleRequestVerification}
+                  busy={requestingId === p.id}
+                />
               ))}
             </ul>
           )}
         </>
       )}
-  {adding && (
-    <AddProjectModal
-      onClose={() => setAdding(false)}
-        onCreated={(project) => {
-    setProjects((list) => [project, ...(list ?? [])])
-    announceProjectAdded(toast, project)
-  }}
-    />
-  )}
+
+      {adding && (
+        <AddProjectModal
+          onClose={() => setAdding(false)}
+          onCreated={(project) => {
+            setProjects((list) => [project, ...(list ?? [])])
+            announceProjectAdded(toast, project)
+          }}
+        />
+      )}
     </div>
   )
 }

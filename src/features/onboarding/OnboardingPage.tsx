@@ -16,6 +16,7 @@ import InstitutionPicker from './InstitutionPicker'
 import { useAuth } from '../auth/authContext'
 import { onboardingKey } from './useOnboardingGate'
 
+
 type FormValues = {
   headline: string;
   location: string;
@@ -72,16 +73,16 @@ const copy = [
 ];
 
 export default function OnboardingPage() {
-  const navigate = useNavigate()
-  const user = useDisplayUser() 
-  const { user: authUser } = useAuth()
-  const [step, setStep] = useState(0)
-  const [institution, setInstitution] = useState<Institution | null>(null)
-  const [institutionError, setInstitutionError] = useState('')
-  const [skills, setSkills] = useState<string[]>([])
-  const [skillQuery, setSkillQuery] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
+  const navigate = useNavigate();
+  const user = useDisplayUser();
+  const { user: authUser } = useAuth();
+  const [step, setStep] = useState(0);
+  const [institution, setInstitution] = useState<Institution | null>(null);
+  const [institutionError, setInstitutionError] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillQuery, setSkillQuery] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const {
     register,
@@ -117,9 +118,9 @@ export default function OnboardingPage() {
     setSaving(true);
     setSaveError("");
     try {
-      await saveOnboarding({ ...getValues(), institution, skills }) 
-        if (authUser) localStorage.setItem(onboardingKey(authUser.id), '1')
-      navigate('/app/dashboard')
+      await saveOnboarding({ ...getValues(), institution, skills });
+      if (authUser) localStorage.setItem(onboardingKey(authUser.id), "1");
+      navigate("/app/dashboard");
     } catch (err) {
       setSaving(false);
       setSaveError(
@@ -207,13 +208,14 @@ export default function OnboardingPage() {
                 error={institutionError}
               />
               <Input
-                label="Programme"
+                label="Programme (optional)"
                 list="programme-options"
-                placeholder="Choose or type your programme"
+                placeholder="Choose or type, if your institution has programmes"
+                helperText="Bootcamps and short courses can leave this empty"
                 autoComplete="off"
-                error={errors.programme?.message}
-                {...register("programme", { required: "Add your programme" })}
-              />
+                {...register("programme")}
+                />
+                
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Track"
@@ -297,14 +299,14 @@ export default function OnboardingPage() {
               </ul>
 
               {saveError && (
-                <InlineAlert
+                                <InlineAlert
                   variant="error"
                   title="Couldn't save your profile"
                   className="mt-4"
                 >
                   {saveError}
                 </InlineAlert>
-              )}
+ )}
             </div>
           )}
 

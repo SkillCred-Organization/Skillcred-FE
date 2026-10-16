@@ -1,16 +1,15 @@
 import { ChevronRight, Code } from 'lucide-react'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
-import type { Project, Status } from '../../types'
+import type { Project } from '../../types'
 
-const rowAction: Partial<Record<Status, string>> = {
-  'self-reported': 'Request verification',
-  draft: 'Continue',
-  'needs-changes': 'Fix',
+type ProjectRowProps = {
+  project: Project
+  onRequestVerification?: (id: string) => void
+  busy?: boolean
 }
 
-export default function ProjectRow({ project }: { project: Project }) {
-  const action = rowAction[project.status]
+export default function ProjectRow({ project, onRequestVerification, busy = false }: ProjectRowProps) {
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-line bg-white p-4">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-cream text-ink-muted">
@@ -24,8 +23,16 @@ export default function ProjectRow({ project }: { project: Project }) {
         <p className="text-sm text-ink-muted">{project.summary}</p>
         <p className="text-xs text-ink-muted">{project.meta}</p>
       </div>
-      {action ? (
-        <Button variant="outline" size="sm" className="w-full sm:w-auto">{action}</Button>
+      {project.actions.requestVerification && onRequestVerification ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto"
+          loading={busy}
+          onClick={() => onRequestVerification(project.id)}
+        >
+          Request verification
+        </Button>
       ) : (
         <ChevronRight className="size-4 text-ink-muted" />
       )}

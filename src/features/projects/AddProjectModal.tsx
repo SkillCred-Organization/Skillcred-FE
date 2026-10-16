@@ -8,11 +8,10 @@ import Stepper from "../../components/ui/Stepper";
 import Toggle from "../../components/ui/Toggle";
 import { addProject, getProfile } from "../../lib/api";
 import type { NewProject, Project, Teammate } from "../../types";
-// import OptionList from "../../components/ui/OptionsList";
-// import { tracks } from "../../lib/options";
 import InlineAlert from "../../components/ui/InlineAlert";
 import Select from "../../components/ui/Select";
 import { projectTracks } from "../../lib/options";
+import { errorText } from '../../lib/errors'
 
 type FormValues = {
   title: string;
@@ -55,7 +54,7 @@ export default function AddProjectModal({
   const [mate, setMate] = useState<Teammate>({ name: "", email: "", role: "" });
   const [askVerification, setAskVerification] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const [institutionName, setInstitutionName] = useState("your institution");
 
@@ -92,7 +91,7 @@ export default function AddProjectModal({
 
   async function submit(status: NewProject["status"]) {
     setSaving(true);
-    setSubmitError(false);
+    setSubmitError("");
     try {
       const project = await addProject({
         ...getValues(),
@@ -101,9 +100,11 @@ export default function AddProjectModal({
       });
       onCreated(project);
       onClose();
-    } catch {
+    } catch (err) {
       setSaving(false);
-      setSubmitError(true);
+      setSubmitError(
+        errorText(err, "Couldn't save your project. Check your connection and try again."),
+      );
     }
   }
 
@@ -338,7 +339,7 @@ export default function AddProjectModal({
 
           {submitError && (
             <InlineAlert variant="error" title="Couldn't save your project">
-              Check your connection and try again.
+              {submitError}
             </InlineAlert>
           )}
         </div>
