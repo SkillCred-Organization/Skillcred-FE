@@ -114,8 +114,7 @@ function clean(object: Record<string, unknown>) {
   return Object.fromEntries(Object.entries(object).filter(([, value]) => value !== '' && value !== undefined))
 }
 
-export function buildProjectPayload(input: NewProject) {
-  const isDraft = input.status === 'draft'
+function buildProjectFields(input: Omit<NewProject, 'status'>, isDraft = false) {
   return clean({
     title: input.title.trim() || (isDraft ? 'Untitled project' : ''),
     summary: input.summary.trim(),
@@ -127,9 +126,16 @@ export function buildProjectPayload(input: NewProject) {
     teammates: input.teammates.length
       ? input.teammates.map((t) => clean({ email: t.email, name: t.name, role: t.role }))
       : undefined,
+  })
+}
+
+export function buildProjectPayload(input: NewProject) {
+  const isDraft = input.status === 'draft'
+  return {
+    ...buildProjectFields(input, isDraft),
     draft: isDraft,
     requestVerification: input.status === 'pending',
-  })
+  }
 }
 
 export async function getProjects(): Promise<Project[]> {
@@ -244,4 +250,16 @@ export async function getDashboard(): Promise<Dashboard> {
       time: timeAgo(a.createdAt ?? a.at ?? a.date),
     })),
   }
+}
+
+export async function updateProject(id: string, input: Omit<NewProject, 'status'>): Promise<Project> {
+  const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(buildProjectFields(input)),
+  })
+  return toProject(data.item)
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await apiClient(`/api/learner/projects/${id}`, { method: 'DELETE' })
 }
