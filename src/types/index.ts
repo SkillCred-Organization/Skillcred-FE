@@ -8,10 +8,17 @@ export type Status =
 
   export type Activity = {
   id: string
-  kind: 'verified' | 'confirmed' | 'needs-changes' | 'draft'
+  kind: 'verified' | 'confirmed' | 'needs-changes' | 'draft' | 'info'
   text: string
   time: string
   action?: string
+}
+
+export type ProjectActions = {
+  edit: boolean
+  requestVerification: boolean
+  withdraw: boolean
+  delete: boolean
 }
 
 export type Project = {
@@ -20,6 +27,7 @@ export type Project = {
   summary: string
   status: Status
   meta: string
+  actions: ProjectActions
 }
 
 export type Teammate = { name: string; email: string; role: string }
@@ -55,4 +63,29 @@ export type LearnerProfile = {
   handle?: string
   skills?: string[]
   institution?: { institutionId?: string; name?: string; programme?: string; cohort?: string }
+}
+
+export type ProjectDetail = Project & {
+  role: string
+  track: string
+  projectType: string
+  startDate: string
+  endDate: string
+  proofLink: string
+  techStack: string[]
+  teammates: Teammate[]
+  decision?: { reason: string; message: string }
+}
+
+export type DashboardStat = { total: number; verified: number }
+
+export type Dashboard = {
+  stats: {
+    projects: DashboardStat
+    certifications: DashboardStat
+    skills: DashboardStat
+    achievements: DashboardStat
+  }
+  banner: { verified: number; waiting: number; needsChanges: number }
+  activity: Activity[]
 }
