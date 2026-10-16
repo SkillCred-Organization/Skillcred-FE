@@ -11,6 +11,9 @@ import { trackEvent } from '../../lib/analytics'
 
 const institutionFields = ['institutionName', 'website', 'registrationNumber'] as const
 const allFields = [...institutionFields, 'fullName', 'jobTitle', 'email', 'password', 'authorised'] as const
+const lax = import.meta.env.VITE_APP_ENV === 'development'
+console.log("LAX", lax)
+
 export default function InstitutionSignupPage() {
   const [step, setStep] = useState<1 | 2>(1)
   const [message, setMessage] = useState('')
@@ -69,7 +72,7 @@ export default function InstitutionSignupPage() {
             <AuthField label="Your name" placeholder="Your full name" autoComplete="name" icon={<UserRound />} {...register('fullName', nameRules)} error={errors.fullName?.message} />
             <AuthField label="Job title" placeholder="e.g. Programme lead" autoComplete="organization-title" {...register('jobTitle', { required: 'Enter your job title', validate: value => !!value.trim() || 'Enter your job title' })} error={errors.jobTitle?.message} />
           </div>
-          <AuthField label="Work email" type="email" placeholder="you@institution.edu" autoComplete="email" icon={<Mail />} {...register('email', { ...emailRules, validate: value => emailMatchesWebsite(value, getValues('website')) || 'Your work email must use your institution’s website domain.' })} error={errors.email?.message} />
+          <AuthField label="Work email" type="email" placeholder="you@institution.edu" autoComplete="email" icon={<Mail />} {...register('email', { ...emailRules, validate: value => lax || emailMatchesWebsite(value, getValues('website')) || 'Your work email must use your institution’s website domain.' })} error={errors.email?.message} />
           <AuthField label="Password" type="password" placeholder="Create a password" autoComplete="new-password" icon={<LockKeyhole />}
             {...register('password', { ...passwordRules, onChange: () => { void trigger('password') } })}
             error={errors.password && ['minLength', 'validate'].includes(errors.password.type)
