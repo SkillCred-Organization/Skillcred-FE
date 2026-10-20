@@ -14,6 +14,6 @@ export function analyticsPagePath(pathname: string) {
   const path = pathname.split(/[?#]/)[0]
   if (/^\/admin\/claims\/[^/]+\/?$/.test(path)) return '/admin/claims/:claim'
   if (/^\/u\/[^/]+\/?$/.test(path)) return '/u/:profile'
-  const known = ['/', '/login', '/signup', '/user-type', '/institution-signup', '/forgot-password', '/reset/check-email', '/reset-password', '/password-updated', '/verify-email', '/account-status', '/terms', '/privacy', '/onboarding', '/app/dashboard', '/app/projects', '/app/certifications', '/app/skills', '/app/achievements', '/app/verification', '/app/share', '/app/profile', '/app/settings', '/admin/dashboard', '/admin/queue', '/admin/learners', '/admin/institution', '/admin/settings', '/admin/notifications', '/admin/profile', '/confirm-teammate']
+  const known = ['/', '/login', '/signup', '/signup/learner', '/user-type', '/institution-signup', '/forgot-password', '/reset/check-email', '/reset-password', '/password-updated', '/verify-email', '/account-status', '/terms', '/privacy', '/onboarding', '/app/dashboard', '/app/projects', '/app/certifications', '/app/skills', '/app/achievements', '/app/verification', '/app/share', '/app/profile', '/app/settings', '/admin/dashboard', '/admin/queue', '/admin/learners', '/admin/institution', '/admin/settings', '/admin/notifications', '/admin/profile', '/confirm-teammate']
   return known.includes(path) ? path : '/other'
 }

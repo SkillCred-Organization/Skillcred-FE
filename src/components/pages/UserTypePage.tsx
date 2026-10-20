@@ -9,7 +9,7 @@ export default function UserTypePage() {
   const navigate = useNavigate()
   return <AuthPageLayout><section className="auth-panel auth-choice">
     <h1>Which user are you?</h1><p className="auth-description">Choose the account that fits you.</p>
-    <form noValidate onSubmit={e => { e.preventDefault(); if (!userType) { setError('Choose an account type to continue.'); return } navigate(userType === 'learner' ? '/signup' : '/institution-signup') }}>
+    <form noValidate onSubmit={e => { e.preventDefault(); if (!userType) { setError('Choose an account type to continue.'); return } navigate(userType === 'learner' ? '/signup/learner' : '/institution-signup') }}>
       <fieldset className="auth-choice-grid"><legend className="sr-only">Choose your account type</legend>
         <label className="auth-choice-card">
           <input type="radio" name="userType" value="learner" checked={userType === 'learner'} onChange={() => { setUserType('learner'); setError('') }} />
