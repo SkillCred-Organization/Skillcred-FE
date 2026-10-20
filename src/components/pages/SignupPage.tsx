@@ -31,7 +31,7 @@ export default function SignupPage() {
   }
   return <AuthPageLayout><section className="auth-panel auth-signup">
     <h1>Create your account</h1><p className="auth-description">It takes about 2 minutes.</p>
-    <div className="auth-role"><GraduationCap aria-hidden="true" /><span>Signing up as a <strong>learner</strong></span><Link className="auth-link" to="/user-type">Change</Link></div>
+    <div className="auth-role"><GraduationCap aria-hidden="true" /><span><strong>Learner</strong> account</span><Link className="auth-link" to="/user-type" aria-label="Change account type">Change</Link></div>
     <AuthAlert message={message} focusOnShow />
     <GoogleAuthButton label="Continue with Google" disabled={isSubmitting} onBusyChange={setGoogleBusy} requiresConsent={!acceptedTerms} onConsentRequired={() => { void trigger('acceptedTerms', { shouldFocus: true }) }} onError={failure} onCredential={async credential => {
       setMessage('')

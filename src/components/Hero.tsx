@@ -21,7 +21,7 @@ export default function Hero() {
             them. Then share one link that employers can trust.
           </p>
           <div className="hero-actions">
-            <Link className="landing-button button-primary" to="/signup">Create an account</Link>
+            <Link className="landing-button button-primary" to="/user-type">Create an account</Link>
             <a className="landing-button button-outline" href="#about">Learn more</a>
           </div>
         </div>

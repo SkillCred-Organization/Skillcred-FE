@@ -15,7 +15,8 @@ All HTTP calls go through `src/lib/apiClient.ts`. The shared client was imported
 ## Routes
 
 - `/user-type`: unselected, learner-selected, institution-selected account choices.
-- `/signup`: learner signup, Google signup, Terms consent, submission state.
+- `/signup`: redirects to `/user-type` so new users choose their account type first.
+- `/signup/learner`: learner signup, Google signup, Terms consent, submission state after choosing Learner.
 - `/institution-signup`: two steps with in-memory form persistence, work-domain validation, server errors and submission state.
 - `/login`: password/Google sign-in, invalid-credential state, first-time Google role/Terms completion.
 - `/forgot-password`: request reset.
