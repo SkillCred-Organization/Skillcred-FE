@@ -35,7 +35,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/signup" element={<Navigate to="/user-type" replace />} />
+      <Route path="/signup/learner" element={<SignupPage />} />
       <Route path="/user-type" element={<UserTypePage />} />
       <Route path="/institution-signup" element={<InstitutionSignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
