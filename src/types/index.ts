@@ -89,3 +89,12 @@ export type Dashboard = {
   banner: { verified: number; waiting: number; needsChanges: number }
   activity: Activity[]
 }
+
+export type Claim = {
+  id: string
+  title: string
+  kind: string
+  status: Status
+  updated: string
+  projectId: string | null
+}

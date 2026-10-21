@@ -33,6 +33,8 @@ import TeammateConfirmationPage from "./components/pages/TeammateConfirmationPag
 import ProjectDetailPage from "./features/projects/ProjectDetailPage";
 import ComingSoon from "./components/ui/ComingSoon";
 import NotFoundPage from "./components/pages/NotFoundPage";
+import VerificationOverviewPage from "./features/verification/VerificationOverviewPage";
+
 
 const stub = (title: string) => <ComingSoon title={title} />;
 
@@ -80,7 +82,7 @@ export default function App() {
           <Route path="certifications" element={stub("Certifications")} />
           <Route path="skills" element={stub("Skills")} />
           <Route path="achievements" element={stub("Achievements")} />
-          <Route path="verification" element={stub("Verification")} />
+<Route path="verification" element={<VerificationOverviewPage />} />
           <Route path="share" element={stub("Share profile")} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
