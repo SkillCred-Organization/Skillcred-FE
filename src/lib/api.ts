@@ -1,6 +1,8 @@
 import { apiClient } from './apiClient'
 import { timeAgo } from './format'
 import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status, ProjectDetail, Activity, Dashboard, DashboardStat} from '../types'
+import type { Claim } from '../types'
+
 
 // ---------- Profile and onboarding ----------
 
@@ -262,4 +264,42 @@ export async function updateProject(id: string, input: Omit<NewProject, 'status'
 
 export async function deleteProject(id: string): Promise<void> {
   await apiClient(`/api/learner/projects/${id}`, { method: 'DELETE' })
+}
+
+// ---------- Verification (all my claims) ----------
+
+type ApiClaim = {
+  id?: string
+  _id?: string
+  title?: string
+  name?: string
+  type?: string
+  kind?: string
+  itemType?: string
+  status?: string
+  projectId?: string
+  itemId?: string
+  refId?: string
+  project?: { id?: string; _id?: string; title?: string }
+  updatedAt?: string
+  createdAt?: string
+}
+
+// The only place that knows the claims' backend shape. A wrong field name is fixed here.
+export async function getClaims(): Promise<Claim[]> {
+  const data = await apiClient<{ items?: ApiClaim[] }>('/api/learner/claims')
+  return (data.items ?? []).map((c, i) => {
+    const type = (c.type ?? c.kind ?? c.itemType ?? '').toLowerCase()
+    const isProject = type.includes('project')
+    const status = knownStatuses.includes(c.status as Status) ? (c.status as Status) : 'self-reported'
+    const linkId = c.projectId ?? c.itemId ?? c.refId ?? c.project?.id ?? c.project?._id ?? c.id ?? c._id
+    return {
+      id: String(c.id ?? c._id ?? i),
+      title: c.title ?? c.name ?? c.project?.title ?? 'Untitled',
+      kind: type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Item',
+      status,
+      updated: timeAgo(c.updatedAt ?? c.createdAt),
+      projectId: isProject && linkId ? String(linkId) : null,
+    }
+  })
 }
