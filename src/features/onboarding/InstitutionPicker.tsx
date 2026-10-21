@@ -19,25 +19,32 @@ export default function InstitutionPicker({
   const [results, setResults] = useState<Institution[]>([]);
   const [open, setOpen] = useState(false);
   const [unlisted, setUnlisted] = useState(value !== null && value.id === null);
+  const [failed, setFailed] = useState(false);
 
   // Search whenever the typed text changes (skipped when the learner types their own name)
-    useEffect(() => {
-    if (unlisted) return
-    let cancelled = false
+  useEffect(() => {
+    if (unlisted) return;
+    let cancelled = false;
     const timer = setTimeout(() => {
       searchInstitutions(query)
         .then((found) => {
-          if (!cancelled) setResults(found)
+          if (!cancelled) {
+            setResults(found);
+            setFailed(false);
+          }
         })
         .catch(() => {
-          if (!cancelled) setResults([])
-        })
-    }, 300)
+          if (!cancelled) {
+            setResults([]);
+            setFailed(true);
+          }
+        });
+    }, 300);
     return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [query, unlisted])
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, unlisted]);
 
   function handleType(text: string) {
     setQuery(text);
@@ -90,7 +97,9 @@ export default function InstitutionPicker({
         >
           {results.length === 0 ? (
             <li className="px-3 py-2 text-sm text-ink-muted">
-              No institutions found
+              {failed
+                ? "Couldn't load institutions. Use \"My institution isn't listed\" below."
+                : "No institutions found"}
             </li>
           ) : (
             results.map((r) => (

@@ -6,7 +6,6 @@ import UserTypePage from "./components/pages/UserTypePage";
 import InstitutionSignupPage from "./components/pages/InstitutionSignupPage";
 import AppLayout from "./components/layout/AppLayout";
 import DashboardPage from "./features/dashboard/DashboardPage";
-
 import ForgotPasswordPage from "./components/pages/ForgotPasswordPage";
 import ResetCheckEmailPage from "./components/pages/ResetCheckEmailPage";
 import NewPasswordPage from "./components/pages/NewPasswordPage";
@@ -17,18 +16,25 @@ import LegalPage from "./components/pages/LegalPage";
 import RequireAuth from "./features/auth/RequireAuth";
 import ProjectsPage from "./features/projects/ProjectsPage";
 import OnboardingPage from "./features/onboarding/OnboardingPage";
-import ProfilePage from './features/profile/ProfilePage'
-import AdminLayout, { AdminProfile } from './features/admin/AdminLayout'
-import { AdminDashboard, ClaimReview, ReviewQueue } from './features/admin/ReviewPages'
-import LearnersPage from './features/admin/LearnersPage'
-import InstitutionPage from './features/admin/InstitutionPage'
-import AdminSettings, { AdminNotifications } from './features/admin/AdminSettings'
-import SettingsPage from './features/settings/SettingsPage'
-import TeammateConfirmationPage from './components/pages/TeammateConfirmationPage'
-import ProjectDetailPage from "./features/projects/ProjectDetailPage"
+import ProfilePage from "./features/profile/ProfilePage";
+import AdminLayout, { AdminProfile } from "./features/admin/AdminLayout";
+import {
+  AdminDashboard,
+  ClaimReview,
+  ReviewQueue,
+} from "./features/admin/ReviewPages";
+import LearnersPage from "./features/admin/LearnersPage";
+import InstitutionPage from "./features/admin/InstitutionPage";
+import AdminSettings, {
+  AdminNotifications,
+} from "./features/admin/AdminSettings";
+import SettingsPage from "./features/settings/SettingsPage";
+import TeammateConfirmationPage from "./components/pages/TeammateConfirmationPage";
+import ProjectDetailPage from "./features/projects/ProjectDetailPage";
+import ComingSoon from "./components/ui/ComingSoon";
+import NotFoundPage from "./components/pages/NotFoundPage";
 
-
-const stub = (title: string) => <h1 className="text-2xl font-semibold text-ink">{title}</h1>;
+const stub = (title: string) => <ComingSoon title={title} />;
 
 export default function App() {
   return (
@@ -47,7 +53,10 @@ export default function App() {
       <Route path="/terms" element={<LegalPage />} />
       <Route path="/privacy" element={<LegalPage privacy />} />
       <Route path="/confirm-teammate" element={<TeammateConfirmationPage />} />
-      <Route path="/verification" element={<Navigate to="/app/verification" replace />} />
+      <Route
+        path="/verification"
+        element={<Navigate to="/app/verification" replace />}
+      />
       <Route element={<RequireAuth role="admin" />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -62,21 +71,22 @@ export default function App() {
         </Route>
       </Route>
       <Route element={<RequireAuth role="learner" />}>
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route path="/app" element={<AppLayout />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="projects/:id" element={<ProjectDetailPage />} />
-        <Route path="certifications" element={stub("Certifications")} />
-        <Route path="skills" element={stub("Skills")} />
-        <Route path="achievements" element={stub("Achievements")} />
-        <Route path="verification" element={stub("Verification")} />
-        <Route path="share" element={stub("Share profile")} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/app" element={<AppLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="certifications" element={stub("Certifications")} />
+          <Route path="skills" element={stub("Skills")} />
+          <Route path="achievements" element={stub("Achievements")} />
+          <Route path="verification" element={stub("Verification")} />
+          <Route path="share" element={stub("Share profile")} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
       </Route>
-      </Route>
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

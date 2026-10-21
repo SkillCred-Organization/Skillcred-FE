@@ -51,6 +51,9 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<ProjectDetail | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading')
   const [busy, setBusy] = useState<'request' | 'withdraw' | null>(null)
+  const [attempt, setAttempt] = useState(0)
+
+
 
   useEffect(() => {
     let cancelled = false
@@ -66,7 +69,7 @@ export default function ProjectDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, attempt])
 
   async function run(kind: 'request' | 'withdraw') {
     if (!project) return
@@ -113,6 +116,20 @@ export default function ProjectDetailPage() {
           icon={missing ? Folder : TriangleAlert}
           title={missing ? 'Project not found' : 'Something went wrong'}
           message={missing ? 'It may have been deleted.' : "It's on our side. Please try again in a moment."}
+
+            action={
+    missing ? undefined : (
+      <Button
+        variant="outline"
+        onClick={() => {
+          setState('loading')
+          setAttempt((a) => a + 1)
+        }}
+      >
+        Retry
+      </Button>
+    )
+  }
         />
       </div>
     )
