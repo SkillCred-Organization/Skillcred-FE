@@ -42,6 +42,7 @@ export type NewProject = {
   link: string
   teammates: Teammate[]
   status: 'pending' | 'self-reported' | 'draft'
+  details?: DetailValues
 }
 
 export type Institution = { id: string | null; name: string }
@@ -62,7 +63,7 @@ export type LearnerProfile = {
   bio?: string
   handle?: string
   skills?: string[]
-  institution?: { institutionId?: string; name?: string; programme?: string; cohort?: string }
+    institution?: { institutionId?: string; id?: string; name?: string; programme?: string; cohort?: string; selfReported?: boolean }
 }
 
 export type ProjectDetail = Project & {
@@ -75,6 +76,7 @@ export type ProjectDetail = Project & {
   techStack: string[]
   teammates: Teammate[]
   decision?: { reason: string; message: string }
+  details: Record<string, string>
 }
 
 export type DashboardStat = { total: number; verified: number }
@@ -86,6 +88,19 @@ export type Dashboard = {
     skills: DashboardStat
     achievements: DashboardStat
   }
-  banner: { verified: number; waiting: number; needsChanges: number }
-  activity: Activity[]
+ 
+ banner: { verified: number; waiting: number; needsChanges: number }
+drafts: number
+ activity: Activity[]
 }
+
+export type Claim = {
+  id: string
+  title: string
+  kind: string
+  status: Status
+  updated: string
+  projectId: string | null
+}
+
+export type DetailValues = Partial<Record<string, string>>

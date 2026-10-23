@@ -1,16 +1,20 @@
 import { apiClient } from './apiClient'
 import { timeAgo } from './format'
 import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status, ProjectDetail, Activity, Dashboard, DashboardStat} from '../types'
+import type { Claim } from '../types'
+import { buildDetails } from './projectFields'
+
 
 // ---------- Profile and onboarding ----------
 
-type InstitutionsResponse = { institutions: { _id: string; name: string }[] }
+type InstitutionsResponse = { institutions: { id?: string; _id?: string; name: string }[] }
 
 export async function searchInstitutions(query: string): Promise<Institution[]> {
   const data = await apiClient<InstitutionsResponse>(
     `/api/learner/institutions?q=${encodeURIComponent(query.trim())}`,
   )
-  return data.institutions.map((i) => ({ id: i._id, name: i.name })) // _id becomes id here, so pages never see _id
+  // The backend's field is `id`. `_id` stays as a fallback for an older server.
+  return data.institutions.map((i) => ({ id: String(i.id ?? i._id ?? ''), name: i.name }))
 }
 
 // The only keys PATCH /api/learner/profile accepts. Any extra key returns a 400.
@@ -61,7 +65,7 @@ export function getProfile() {
     startDate?: string
     endDate?: string
     proofLink?: string
-    details?: { projectType?: string; techStack?: string[] }
+    details?: Record<string, unknown>
     teammates?: { name?: string; email?: string; role?: string }[]
     decision?: { reason?: string; messageToLearner?: string }
     actions?: { edit?: boolean; requestVerification?: boolean; withdraw?: boolean; delete?: boolean }
@@ -115,6 +119,8 @@ function clean(object: Record<string, unknown>) {
 }
 
 function buildProjectFields(input: Omit<NewProject, 'status'>, isDraft = false) {
+const details = buildDetails(input.track, input.details)
+
   return clean({
     title: input.title.trim() || (isDraft ? 'Untitled project' : ''),
     summary: input.summary.trim(),
@@ -124,8 +130,9 @@ function buildProjectFields(input: Omit<NewProject, 'status'>, isDraft = false) 
     endDate: input.endDate,
     proofLink: input.link.trim(),
     teammates: input.teammates.length
-      ? input.teammates.map((t) => clean({ email: t.email, name: t.name, role: t.role }))
+      ? input.teammates.map((t) => clean({ email: t.email, name: t.name, role: t.role}))
       : undefined,
+    details: Object.keys(details).length ? details : undefined,
   })
 }
 
@@ -151,6 +158,27 @@ export async function addProject(input: NewProject): Promise<Project> {
   return toProject(data.item)
 }
 
+export async function updateProject(
+  id: string,
+  input: NewProject,
+): Promise<Project> {
+  const data = await apiClient<{ item: ApiProject }>(
+    `/api/learner/projects/${id}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(buildProjectFields(input, false)),
+    },
+  );
+
+  return toProject(data.item);
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await apiClient(`/api/learner/projects/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export async function requestVerification(id: string): Promise<Project> {
   const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}/request-verification`, {
     method: 'POST',
@@ -159,17 +187,33 @@ export async function requestVerification(id: string): Promise<Project> {
   return toProject(data.item)
 }
 
+  function detailText(value: unknown): string {
+    if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string').join(', ')
+    return typeof value === 'string' ? value : ''
+  }
+
+  function detailsToText(details?: Record<string, unknown>): Record<string, string> {
+    const out: Record<string, string> = {}
+    for (const [key, value] of Object.entries(details ?? {})) {
+      const text = detailText(value)
+      if (text) out[key] = text
+    }
+    return out
+  }
+
   function toProjectDetail(p: ApiProject): ProjectDetail {
     const hasDecision = p.decision?.reason || p.decision?.messageToLearner
+    const rawStack = p.details?.techStack
     return {
       ...toProject(p),
       role: p.role ?? '',
       track: p.track ?? '',
-      projectType: p.details?.projectType ?? '',
+      projectType: detailText(p.details?.projectType),
       startDate: p.startDate ?? '',
       endDate: p.endDate ?? '',
       proofLink: p.proofLink ?? '',
-      techStack: p.details?.techStack ?? [],
+      techStack: Array.isArray(rawStack) ? rawStack.filter((t): t is string => typeof t === 'string') : [],
+      details: detailsToText(p.details),
       teammates: (p.teammates ?? []).map((t) => ({ name: t.name ?? '', email: t.email ?? '', role: t.role ?? '' })),
       decision: hasDecision
         ? { reason: p.decision?.reason ?? '', message: p.decision?.messageToLearner ?? '' }
@@ -191,25 +235,24 @@ export async function requestVerification(id: string): Promise<Project> {
   }
 
 
-  // ---------- Dashboard ----------
+ // ---------- Dashboard ----------
 
 type ApiStat = { total?: number; verified?: number }
 type ApiActivity = {
-  id?: string
-  _id?: string
-  type?: string
-  kind?: string
-  event?: string
-  message?: string
-  text?: string
-  title?: string
-  description?: string
-  createdAt?: string
+  claimId?: string
+  claimTitle?: string
+  action?: string
+  label?: string
   at?: string
-  date?: string
 }
 type ApiDashboard = {
-  stats?: { projects?: ApiStat; certifications?: ApiStat; skills?: ApiStat; achievements?: ApiStat }
+  stats?: {
+    projects?: ApiStat
+    certifications?: ApiStat
+    skills?: ApiStat
+    achievements?: ApiStat
+    drafts?: number
+  }
   banner?: { verified?: number; waiting?: number; needsChanges?: number }
   recentActivity?: ApiActivity[]
 }
@@ -218,17 +261,15 @@ function toStat(s?: ApiStat): DashboardStat {
   return { total: s?.total ?? 0, verified: s?.verified ?? 0 }
 }
 
-// Picks an icon for an activity from its type name. Unknown types get a neutral icon.
-function activityKind(a: ApiActivity): Activity['kind'] {
-  const label = `${a.type ?? ''} ${a.kind ?? ''} ${a.event ?? ''}`.toLowerCase().replace(/[_-]/g, ' ')
-  if (/verified|approved/.test(label)) return 'verified'
-  if (/changes/.test(label)) return 'needs-changes'
-  if (/confirm/.test(label)) return 'confirmed'
-  if (/draft/.test(label)) return 'draft'
+function activityKind(action = ''): Activity['kind'] {
+  const a = action.toLowerCase().replace(/[_-]/g, ' ')
+  if (/verified|approved/.test(a)) return 'verified'
+  if (/change/.test(a)) return 'needs-changes'
+  if (/confirm/.test(a)) return 'confirmed'
+  if (/draft/.test(a)) return 'draft'
   return 'info'
 }
 
-// The only place that knows the dashboard's backend shape. A wrong field name is fixed here.
 export async function getDashboard(): Promise<Dashboard> {
   const data = await apiClient<ApiDashboard>('/api/learner/dashboard')
   return {
@@ -243,23 +284,51 @@ export async function getDashboard(): Promise<Dashboard> {
       waiting: data.banner?.waiting ?? 0,
       needsChanges: data.banner?.needsChanges ?? 0,
     },
+    drafts: data.stats?.drafts ?? 0,
     activity: (data.recentActivity ?? []).map((a, i) => ({
-      id: String(a.id ?? a._id ?? i),
-      kind: activityKind(a),
-      text: a.message ?? a.text ?? a.title ?? a.description ?? 'Activity on your profile',
-      time: timeAgo(a.createdAt ?? a.at ?? a.date),
+      id: `${a.claimId ?? 'event'}-${i}`,
+      kind: activityKind(a.action),
+      text:
+        a.claimTitle && a.label ? `${a.claimTitle}: ${a.label}` : (a.label ?? a.claimTitle ?? 'Activity on your profile'),
+      time: timeAgo(a.at),
     })),
   }
 }
 
-export async function updateProject(id: string, input: Omit<NewProject, 'status'>): Promise<Project> {
-  const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(buildProjectFields(input)),
-  })
-  return toProject(data.item)
+// ---------- Verification (all my claims) ----------
+
+type ApiClaim = {
+  id?: string
+  _id?: string
+  title?: string
+  name?: string
+  type?: string
+  kind?: string
+  itemType?: string
+  status?: string
+  projectId?: string
+  itemId?: string
+  refId?: string
+  project?: { id?: string; _id?: string; title?: string }
+  updatedAt?: string
+  createdAt?: string
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  await apiClient(`/api/learner/projects/${id}`, { method: 'DELETE' })
+// The only place that knows the claims' backend shape. A wrong field name is fixed here.
+export async function getClaims(): Promise<Claim[]> {
+  const data = await apiClient<{ items?: ApiClaim[] }>('/api/learner/claims')
+  return (data.items ?? []).map((c, i) => {
+    const type = (c.type ?? c.kind ?? c.itemType ?? '').toLowerCase()
+    const isProject = type.includes('project')
+    const status = knownStatuses.includes(c.status as Status) ? (c.status as Status) : 'self-reported'
+    const linkId = c.projectId ?? c.itemId ?? c.refId ?? c.project?.id ?? c.project?._id ?? c.id ?? c._id
+    return {
+      id: String(c.id ?? c._id ?? i),
+      title: c.title ?? c.name ?? c.project?.title ?? 'Untitled',
+      kind: type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Item',
+      status,
+      updated: timeAgo(c.updatedAt ?? c.createdAt),
+      projectId: isProject && linkId ? String(linkId) : null,
+    }
+  })
 }
