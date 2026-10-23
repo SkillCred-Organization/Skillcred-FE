@@ -63,7 +63,7 @@ export type LearnerProfile = {
   bio?: string
   handle?: string
   skills?: string[]
-  institution?: { institutionId?: string; name?: string; programme?: string; cohort?: string }
+    institution?: { institutionId?: string; id?: string; name?: string; programme?: string; cohort?: string; selfReported?: boolean }
 }
 
 export type ProjectDetail = Project & {
@@ -88,8 +88,10 @@ export type Dashboard = {
     skills: DashboardStat
     achievements: DashboardStat
   }
-  banner: { verified: number; waiting: number; needsChanges: number }
-  activity: Activity[]
+ 
+ banner: { verified: number; waiting: number; needsChanges: number }
+drafts: number
+ activity: Activity[]
 }
 
 export type Claim = {
