@@ -66,6 +66,7 @@ export default function AddProjectModal({
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [institutionName, setInstitutionName] = useState("your institution");
+  const [institutionLinked, setInstitutionLinked] = useState(true);
 
   useEffect(() => {
     if (editing) return;
@@ -73,6 +74,8 @@ export default function AddProjectModal({
       .then(({ profile }) => {
         if (profile?.institution?.name)
           setInstitutionName(profile.institution.name);
+                const inst = profile?.institution
+        setInstitutionLinked(Boolean(inst && (inst.institutionId || inst.id) && !inst.selfReported))
       })
       .catch(() => {});
   }, [editing]);
@@ -102,6 +105,7 @@ export default function AddProjectModal({
   const track = useWatch({ control, name: "track" });
   const trackFields = detailFields[track] ?? [];
   const people = hasTeam ? teammates : [];
+  const sendsForVerification = askVerification && institutionLinked;
   const mateValid =
     mate.name.trim() !== "" && /^\S+@\S+\.\S+$/.test(mate.email);
   const values = getValues();
@@ -125,7 +129,11 @@ export default function AddProjectModal({
     setSaving(true);
     setSubmitError("");
     try {
-      const fields = { ...getValues(), teammates: people };
+      const fields: NewProject = {
+  ...getValues(),
+  teammates: people,
+  status: status,
+};
       const saved = project
         ? await updateProject(project.id, fields)
         : await addProject({ ...fields, status });
@@ -169,12 +177,12 @@ export default function AddProjectModal({
           <Button
             loading={saving}
             onClick={() =>
-              submit(askVerification ? "pending" : "self-reported")
+              submit(sendsForVerification ? "pending" : "self-reported")
             }
           >
             {editing
               ? "Save changes"
-              : askVerification
+              : sendsForVerification
                 ? "Submit project"
                 : "Add project"}
           </Button>
@@ -416,6 +424,14 @@ export default function AddProjectModal({
               title="Saving doesn't send this for verification"
             >
               Use Request verification on the project page when you are ready.
+            </InlineAlert>
+          ) : !institutionLinked ? (
+            <InlineAlert
+              variant="info"
+              title="Your institution isn't connected yet"
+            >
+              Your work stays Self-reported until your institution joins
+              SkillCred.
             </InlineAlert>
           ) : (
             <div className="rounded-lg border border-banner-line bg-banner p-3">

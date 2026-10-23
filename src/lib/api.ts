@@ -7,13 +7,14 @@ import { buildDetails } from './projectFields'
 
 // ---------- Profile and onboarding ----------
 
-type InstitutionsResponse = { institutions: { _id: string; name: string }[] }
+type InstitutionsResponse = { institutions: { id?: string; _id?: string; name: string }[] }
 
 export async function searchInstitutions(query: string): Promise<Institution[]> {
   const data = await apiClient<InstitutionsResponse>(
     `/api/learner/institutions?q=${encodeURIComponent(query.trim())}`,
   )
-  return data.institutions.map((i) => ({ id: i._id, name: i.name })) // _id becomes id here, so pages never see _id
+  // The backend's field is `id`. `_id` stays as a fallback for an older server.
+  return data.institutions.map((i) => ({ id: String(i.id ?? i._id ?? ''), name: i.name }))
 }
 
 // The only keys PATCH /api/learner/profile accepts. Any extra key returns a 400.
@@ -157,6 +158,27 @@ export async function addProject(input: NewProject): Promise<Project> {
   return toProject(data.item)
 }
 
+export async function updateProject(
+  id: string,
+  input: NewProject,
+): Promise<Project> {
+  const data = await apiClient<{ item: ApiProject }>(
+    `/api/learner/projects/${id}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(buildProjectFields(input, false)),
+    },
+  );
+
+  return toProject(data.item);
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await apiClient(`/api/learner/projects/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export async function requestVerification(id: string): Promise<Project> {
   const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}/request-verification`, {
     method: 'POST',
@@ -213,25 +235,24 @@ export async function requestVerification(id: string): Promise<Project> {
   }
 
 
-  // ---------- Dashboard ----------
+ // ---------- Dashboard ----------
 
 type ApiStat = { total?: number; verified?: number }
 type ApiActivity = {
-  id?: string
-  _id?: string
-  type?: string
-  kind?: string
-  event?: string
-  message?: string
-  text?: string
-  title?: string
-  description?: string
-  createdAt?: string
+  claimId?: string
+  claimTitle?: string
+  action?: string
+  label?: string
   at?: string
-  date?: string
 }
 type ApiDashboard = {
-  stats?: { projects?: ApiStat; certifications?: ApiStat; skills?: ApiStat; achievements?: ApiStat }
+  stats?: {
+    projects?: ApiStat
+    certifications?: ApiStat
+    skills?: ApiStat
+    achievements?: ApiStat
+    drafts?: number
+  }
   banner?: { verified?: number; waiting?: number; needsChanges?: number }
   recentActivity?: ApiActivity[]
 }
@@ -240,17 +261,15 @@ function toStat(s?: ApiStat): DashboardStat {
   return { total: s?.total ?? 0, verified: s?.verified ?? 0 }
 }
 
-// Picks an icon for an activity from its type name. Unknown types get a neutral icon.
-function activityKind(a: ApiActivity): Activity['kind'] {
-  const label = `${a.type ?? ''} ${a.kind ?? ''} ${a.event ?? ''}`.toLowerCase().replace(/[_-]/g, ' ')
-  if (/verified|approved/.test(label)) return 'verified'
-  if (/changes/.test(label)) return 'needs-changes'
-  if (/confirm/.test(label)) return 'confirmed'
-  if (/draft/.test(label)) return 'draft'
+function activityKind(action = ''): Activity['kind'] {
+  const a = action.toLowerCase().replace(/[_-]/g, ' ')
+  if (/verified|approved/.test(a)) return 'verified'
+  if (/change/.test(a)) return 'needs-changes'
+  if (/confirm/.test(a)) return 'confirmed'
+  if (/draft/.test(a)) return 'draft'
   return 'info'
 }
 
-// The only place that knows the dashboard's backend shape. A wrong field name is fixed here.
 export async function getDashboard(): Promise<Dashboard> {
   const data = await apiClient<ApiDashboard>('/api/learner/dashboard')
   return {
@@ -265,25 +284,15 @@ export async function getDashboard(): Promise<Dashboard> {
       waiting: data.banner?.waiting ?? 0,
       needsChanges: data.banner?.needsChanges ?? 0,
     },
+    drafts: data.stats?.drafts ?? 0,
     activity: (data.recentActivity ?? []).map((a, i) => ({
-      id: String(a.id ?? a._id ?? i),
-      kind: activityKind(a),
-      text: a.message ?? a.text ?? a.title ?? a.description ?? 'Activity on your profile',
-      time: timeAgo(a.createdAt ?? a.at ?? a.date),
+      id: `${a.claimId ?? 'event'}-${i}`,
+      kind: activityKind(a.action),
+      text:
+        a.claimTitle && a.label ? `${a.claimTitle}: ${a.label}` : (a.label ?? a.claimTitle ?? 'Activity on your profile'),
+      time: timeAgo(a.at),
     })),
   }
-}
-
-export async function updateProject(id: string, input: Omit<NewProject, 'status'>): Promise<Project> {
-  const data = await apiClient<{ item: ApiProject }>(`/api/learner/projects/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(buildProjectFields(input)),
-  })
-  return toProject(data.item)
-}
-
-export async function deleteProject(id: string): Promise<void> {
-  await apiClient(`/api/learner/projects/${id}`, { method: 'DELETE' })
 }
 
 // ---------- Verification (all my claims) ----------
