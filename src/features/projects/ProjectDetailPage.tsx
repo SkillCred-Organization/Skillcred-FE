@@ -14,6 +14,8 @@ import { formatMonth } from '../../lib/format'
 import { projectTracks } from '../../lib/options'
 import type { ProjectDetail } from '../../types'
 import ProjectManageActions from './ProjectManageActions'
+import { detailFields } from '../../lib/projectFields'
+
 
 function Timeline({ status }: { status: ProjectDetail['status'] }) {
   const sent = ['pending', 'needs-changes', 'verified', 'team-confirmed'].includes(status)
@@ -39,7 +41,7 @@ function Row({ label, value }: { label: string; value: string }) {
   if (!value) return null
   return (
     <div className="flex gap-4 py-2 text-sm">
-      <dt className="w-20 shrink-0 text-ink-muted">{label}</dt>
+      <dt className="w-28 shrink-0 text-ink-muted">{label}</dt>
       <dd className="min-w-0 break-words text-ink">{value}</dd>
     </div>
   )
@@ -139,6 +141,10 @@ export default function ProjectDetailPage() {
   const dates = [formatMonth(project.startDate), formatMonth(project.endDate)].filter(Boolean).join(' to ')
   const linkIsSafe = /^https?:\/\//i.test(project.proofLink)
 
+  const extraDetails = (detailFields[project.track] ?? []).filter(
+    (f) => f.key !== 'projectType' && f.key !== 'techStack' && project.details[f.key],
+  )
+
   return (
     <div className="mx-auto max-w-4xl">
       {back}
@@ -196,6 +202,17 @@ export default function ProjectDetailPage() {
               </ul>
             </section>
           )}
+
+            {extraDetails.length > 0 && (
+    <section className="rounded-xl border border-line bg-white p-4">
+      <h2 className="mb-1 text-base font-semibold text-ink">More about this project</h2>
+      <dl className="divide-y divide-line">
+        {extraDetails.map((f) => (
+          <Row key={f.key} label={f.label} value={project.details[f.key]} />
+        ))}
+      </dl>
+    </section>
+  )}
 
           {project.proofLink && (
             <section className="rounded-xl border border-line bg-white p-4">

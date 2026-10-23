@@ -42,6 +42,7 @@ export type NewProject = {
   link: string
   teammates: Teammate[]
   status: 'pending' | 'self-reported' | 'draft'
+  details?: DetailValues
 }
 
 export type Institution = { id: string | null; name: string }
@@ -75,6 +76,7 @@ export type ProjectDetail = Project & {
   techStack: string[]
   teammates: Teammate[]
   decision?: { reason: string; message: string }
+  details: Record<string, string>
 }
 
 export type DashboardStat = { total: number; verified: number }
@@ -98,3 +100,5 @@ export type Claim = {
   updated: string
   projectId: string | null
 }
+
+export type DetailValues = Partial<Record<string, string>>

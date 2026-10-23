@@ -9,7 +9,7 @@ export default defineConfig({
   strictPort: true,
   proxy: {
     '/api': {
-      target: 'https://skillcred-backend-fc5i.onrender.com',
+      target: 'https://skillcred-be-development.onrender.com',
       changeOrigin: true,
     },
   },

@@ -2,6 +2,7 @@ import { apiClient } from './apiClient'
 import { timeAgo } from './format'
 import type { Institution, LearnerProfile, NewProject, OnboardingData, Project, Status, ProjectDetail, Activity, Dashboard, DashboardStat} from '../types'
 import type { Claim } from '../types'
+import { buildDetails } from './projectFields'
 
 
 // ---------- Profile and onboarding ----------
@@ -63,7 +64,7 @@ export function getProfile() {
     startDate?: string
     endDate?: string
     proofLink?: string
-    details?: { projectType?: string; techStack?: string[] }
+    details?: Record<string, unknown>
     teammates?: { name?: string; email?: string; role?: string }[]
     decision?: { reason?: string; messageToLearner?: string }
     actions?: { edit?: boolean; requestVerification?: boolean; withdraw?: boolean; delete?: boolean }
@@ -117,6 +118,8 @@ function clean(object: Record<string, unknown>) {
 }
 
 function buildProjectFields(input: Omit<NewProject, 'status'>, isDraft = false) {
+const details = buildDetails(input.track, input.details)
+
   return clean({
     title: input.title.trim() || (isDraft ? 'Untitled project' : ''),
     summary: input.summary.trim(),
@@ -126,8 +129,9 @@ function buildProjectFields(input: Omit<NewProject, 'status'>, isDraft = false) 
     endDate: input.endDate,
     proofLink: input.link.trim(),
     teammates: input.teammates.length
-      ? input.teammates.map((t) => clean({ email: t.email, name: t.name, role: t.role }))
+      ? input.teammates.map((t) => clean({ email: t.email, name: t.name, role: t.role}))
       : undefined,
+    details: Object.keys(details).length ? details : undefined,
   })
 }
 
@@ -161,17 +165,33 @@ export async function requestVerification(id: string): Promise<Project> {
   return toProject(data.item)
 }
 
+  function detailText(value: unknown): string {
+    if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string').join(', ')
+    return typeof value === 'string' ? value : ''
+  }
+
+  function detailsToText(details?: Record<string, unknown>): Record<string, string> {
+    const out: Record<string, string> = {}
+    for (const [key, value] of Object.entries(details ?? {})) {
+      const text = detailText(value)
+      if (text) out[key] = text
+    }
+    return out
+  }
+
   function toProjectDetail(p: ApiProject): ProjectDetail {
     const hasDecision = p.decision?.reason || p.decision?.messageToLearner
+    const rawStack = p.details?.techStack
     return {
       ...toProject(p),
       role: p.role ?? '',
       track: p.track ?? '',
-      projectType: p.details?.projectType ?? '',
+      projectType: detailText(p.details?.projectType),
       startDate: p.startDate ?? '',
       endDate: p.endDate ?? '',
       proofLink: p.proofLink ?? '',
-      techStack: p.details?.techStack ?? [],
+      techStack: Array.isArray(rawStack) ? rawStack.filter((t): t is string => typeof t === 'string') : [],
+      details: detailsToText(p.details),
       teammates: (p.teammates ?? []).map((t) => ({ name: t.name ?? '', email: t.email ?? '', role: t.role ?? '' })),
       decision: hasDecision
         ? { reason: p.decision?.reason ?? '', message: p.decision?.messageToLearner ?? '' }
