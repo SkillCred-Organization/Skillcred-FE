@@ -11,6 +11,9 @@ import type {
   Activity,
   Dashboard,
   DashboardStat,
+  PublicItem,
+  PublicProfile,
+  ShareSettings,
 } from "../types";
 import type { Claim } from "../types";
 import { buildDetails } from "./projectFields";
@@ -442,4 +445,97 @@ export async function getClaims(): Promise<Claim[]> {
       projectId: isProject && linkId ? String(linkId) : null,
     };
   });
+}
+
+// ---------- Sharing and public profile ----------
+
+type ApiShare = { isPublic?: boolean; showPendingAndSelfReported?: boolean; showEmail?: boolean }
+
+export async function getShareSettings(): Promise<ShareSettings> {
+  const raw = await apiClient<ApiShare & { settings?: ApiShare }>('/api/learner/share-settings')
+  const s = raw.settings ?? raw
+  return {
+    isPublic: Boolean(s.isPublic),
+    showPendingAndSelfReported: Boolean(s.showPendingAndSelfReported),
+    showEmail: Boolean(s.showEmail),
+  }
+}
+
+export async function saveShareSettings(change: Partial<ShareSettings>): Promise<void> {
+  await apiClient('/api/learner/share-settings', { method: 'PATCH', body: JSON.stringify(change) })
+}
+
+export async function isHandleAvailable(handle: string): Promise<boolean> {
+  const data = await apiClient<{ available?: boolean }>(
+    `/api/learner/handle-available?handle=${encodeURIComponent(handle)}`,
+  )
+  return Boolean(data.available)
+}
+
+export async function saveHandle(handle: string): Promise<void> {
+  await apiClient('/api/learner/profile', { method: 'PATCH', body: JSON.stringify({ handle }) })
+}
+
+type ApiPublicItem = {
+  id?: string
+  _id?: string
+  title?: string
+  name?: string
+  summary?: string
+  description?: string
+  status?: string
+  verifiedBy?: string | { name?: string; institutionName?: string }
+}
+
+type ApiPublicProfile = {
+  fullName?: string
+  handle?: string
+  headline?: string
+  location?: string
+  bio?: string
+  email?: string
+  institution?: string | { name?: string; programme?: string } | null
+  projects?: ApiPublicItem[]
+  certifications?: ApiPublicItem[]
+  achievements?: ApiPublicItem[]
+  skills?: (string | { name?: string; verified?: boolean })[]
+  stats?: { verified?: number; total?: number }
+}
+
+function toPublicItem(p: ApiPublicItem, i: number): PublicItem {
+  const status = knownStatuses.includes(p.status as Status) ? (p.status as Status) : 'self-reported'
+  const by = typeof p.verifiedBy === 'string' ? p.verifiedBy : (p.verifiedBy?.name ?? p.verifiedBy?.institutionName ?? '')
+  return {
+    id: String(p.id ?? p._id ?? i),
+    title: p.title ?? p.name ?? 'Untitled',
+    summary: p.summary ?? p.description ?? '',
+    status,
+    verifiedBy: by,
+  }
+}
+
+// The only place that knows the public profile's backend shape. A wrong field name is fixed here.
+export async function getPublicProfile(handle: string): Promise<PublicProfile> {
+  const data = await apiClient<{ profile: ApiPublicProfile }>(
+    `/api/public/profiles/${encodeURIComponent(handle)}`,
+    { auth: false },
+  )
+  const p = data.profile
+  const inst = p.institution
+  return {
+    fullName: p.fullName ?? '',
+    handle: p.handle ?? handle,
+    headline: p.headline ?? '',
+    location: p.location ?? '',
+    bio: p.bio ?? '',
+    email: p.email ?? '',
+    institution: typeof inst === 'string' ? inst : [inst?.name, inst?.programme].filter(Boolean).join(' · '),
+    projects: (p.projects ?? []).map(toPublicItem),
+    certifications: (p.certifications ?? []).map(toPublicItem),
+    achievements: (p.achievements ?? []).map(toPublicItem),
+    skills: (p.skills ?? []).map((s) =>
+      typeof s === 'string' ? { name: s, verified: false } : { name: s.name ?? '', verified: Boolean(s.verified) },
+    ),
+    stats: { verified: p.stats?.verified ?? 0, total: p.stats?.total ?? 0 },
+  }
 }

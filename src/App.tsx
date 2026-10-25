@@ -34,7 +34,8 @@ import ProjectDetailPage from "./features/projects/ProjectDetailPage";
 import ComingSoon from "./components/ui/ComingSoon";
 import NotFoundPage from "./components/pages/NotFoundPage";
 import VerificationOverviewPage from "./features/verification/VerificationOverviewPage";
-
+import SharePage from "./features/share/SharePage";
+import PublicProfilePage from "./features/public/PublicProfilePage";
 
 const stub = (title: string) => <ComingSoon title={title} />;
 
@@ -84,12 +85,13 @@ export default function App() {
           <Route path="skills" element={stub("Skills")} />
           <Route path="achievements" element={stub("Achievements")} />
 <Route path="verification" element={<VerificationOverviewPage />} />
-          <Route path="share" element={stub("Share profile")} />
+          <Route path="share" element={<SharePage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />
+      <Route path="/u/:handle" element={<PublicProfilePage />} />
     </Routes>
   );
 }
