@@ -125,6 +125,7 @@ function DashboardContent({ data, institution, onAdd }: ContentProps) {
           total={sent}
           waiting={data.banner.waiting}
           needsChanges={data.banner.needsChanges}
+          onShare={() => navigate('/app/share')}
         />
       ) : (
         <InlineAlert

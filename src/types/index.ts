@@ -105,3 +105,32 @@ export type Claim = {
 }
 
 export type DetailValues = Partial<Record<string, string>>
+
+export type ShareSettings = {
+  isPublic: boolean
+  showPendingAndSelfReported: boolean
+  showEmail: boolean
+}
+
+export type PublicItem = {
+  id: string
+  title: string
+  summary: string
+  status: Status
+  verifiedBy: string
+}
+
+export type PublicProfile = {
+  fullName: string
+  handle: string
+  headline: string
+  location: string
+  bio: string
+  email: string
+  institution: string
+  projects: PublicItem[]
+  certifications: PublicItem[]
+  achievements: PublicItem[]
+  skills: { name: string; verified: boolean }[]
+  stats: { verified: number; total: number }
+}
