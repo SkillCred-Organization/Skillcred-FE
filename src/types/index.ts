@@ -43,6 +43,7 @@ export type NewProject = {
   teammates: Teammate[]
   status: 'pending' | 'self-reported' | 'draft'
   details?: DetailValues
+  institutionId?: string
 }
 
 export type Institution = { id: string | null; name: string }

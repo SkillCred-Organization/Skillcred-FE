@@ -45,7 +45,7 @@ export default function VerificationBanner({
         </div>
       </div>
 
-      <Button variant="accent" icon={<Share2 className="size-4" />}>
+      <Button variant="accent" icon={<Share2 className="size-4  w-full md:w-auto" />}>
         Share profile
       </Button>
     </section>
