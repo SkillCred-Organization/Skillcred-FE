@@ -6,11 +6,12 @@ import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
 import { useToast } from '../../components/ui/toastContext'
 import { getProjects, requestVerification } from '../../lib/api'
-import { errorText } from '../../lib/errors'
+import { errorText, needsInstitution } from '../../lib/errors'
 import type { Project, Status } from '../../types'
 import AddProjectModal from './AddProjectModal'
 import ProjectRow from './ProjectRow'
 import { announceProjectAdded } from './projectToast'
+import ChooseInstitutionModal from './ChooseInstitutionModal'
 
 type Filter = 'all' | Status
 
@@ -30,6 +31,7 @@ export default function ProjectsPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [adding, setAdding] = useState(false)
   const [requestingId, setRequestingId] = useState<string | null>(null)
+  const [choosingFor, setChoosingFor] = useState<string | null>(null)
 
   useEffect(() => {
     getProjects()
@@ -37,14 +39,19 @@ export default function ProjectsPage() {
       .catch(() => setError(true))
   }, [attempt])
 
+    async function sendRequest(id: string, institutionId?: string) {
+    const updated = await requestVerification(id, institutionId)
+    setProjects((list) => (list ?? []).map((p) => (p.id === id ? updated : p)))
+    toast.success('Sent to your institution for verification.')
+  }
+
   async function handleRequestVerification(id: string) {
     setRequestingId(id)
     try {
-      const updated = await requestVerification(id)
-      setProjects((list) => (list ?? []).map((p) => (p.id === id ? updated : p)))
-      toast.success('Sent to your institution for verification.')
+      await sendRequest(id)
     } catch (err) {
-      toast.error(errorText(err, "Couldn't send this project. Please try again."))
+      if (needsInstitution(err)) setChoosingFor(id)
+      else toast.error(errorText(err, "Couldn't send this project. Please try again."))
     } finally {
       setRequestingId(null)
     }
@@ -135,6 +142,13 @@ export default function ProjectsPage() {
           )}
         </>
       )}
+
+        {choosingFor && (
+    <ChooseInstitutionModal
+      onClose={() => setChoosingFor(null)}
+      onSend={(institutionId) => sendRequest(choosingFor, institutionId)}
+    />
+  )}
 
       {adding && (
         <AddProjectModal
