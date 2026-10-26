@@ -10,7 +10,7 @@ import Select from "../../components/ui/Select";
 import Stepper from "../../components/ui/Stepper";
 import Textarea from "../../components/ui/Textarea";
 import Toggle from "../../components/ui/Toggle";
-import { addProject, getProfile, updateProject } from "../../lib/api";
+import { addProject, deleteProject, getProfile, updateProject } from "../../lib/api";
 import { errorText } from "../../lib/errors";
 import { projectTracks } from "../../lib/options";
 import { detailFields } from "../../lib/projectFields";
@@ -82,6 +82,8 @@ export default function AddProjectModal({
     canPublish ? null : true,
   );
   const [chosen, setChosen] = useState<Institution | null>(null);
+const [typedInstitution, setTypedInstitution] = useState('')
+
 
   useEffect(() => {
     if (!canPublish) return;
@@ -149,37 +151,35 @@ export default function AddProjectModal({
     setMate({ name: "", email: "", role: "" });
   }
 
-  async function submit(status: NewProject["status"]) {
-    setSaving(true);
-    setSubmitError("");
+  async function submit(status: NewProject['status']) {
+    setSaving(true)
+    setSubmitError('')
     try {
-      const fields = { ...getValues(), teammates: people };
-      let saved: Project;
-      if (project && (!isDraftEdit || status === "draft")) {
-        saved = await updateProject(project.id, fields); // plain save, status unchanged
-      } else if (project) {
-        saved = await updateProject(project.id, fields, {
-          requestVerification: status === "pending",
-          institutionId: chosen?.id ?? undefined,
-        });
+      const fields = { ...getValues(), teammates: people }
+      let saved: Project
+      if (project && (!isDraftEdit || status === 'draft')) {
+        saved = await updateProject(project.id, fields) // plain save, status unchanged
       } else {
+        // A new project, or a finished draft. A draft becomes a project by creating it properly
+        // and removing the draft, because only these calls are documented by the backend.
         saved = await addProject({
           ...fields,
           status,
-          institutionId:
-            status === "pending" ? (chosen?.id ?? undefined) : undefined,
-        });
+          institutionId: status === 'pending' ? chosen?.id ?? undefined : undefined,
+        })
+        if (project) {
+          try {
+            await deleteProject(project.id)
+          } catch {
+             // the project exists now; a leftover draft can be deleted by hand
+          }
+        }
       }
-      onCreated(saved);
-      onClose();
+      onCreated(saved)
+      onClose()
     } catch (err) {
-      setSaving(false);
-      setSubmitError(
-        errorText(
-          err,
-          "Couldn't save your project. Check your connection and try again.",
-        ),
-      );
+      setSaving(false)
+      setSubmitError(errorText(err, "Couldn't save your project. Check your connection and try again."))
     }
   }
 
@@ -474,10 +474,7 @@ export default function AddProjectModal({
           </dl>
 
           {!canPublish ? (
-            <InlineAlert
-              variant="info"
-              title="Saving doesn't send this for verification"
-            >
+            <InlineAlert variant="info" title="Saving doesn't send this for verification">
               Use Request verification on the project page when you are ready.
             </InlineAlert>
           ) : institutionLinked === null ? (
@@ -490,24 +487,24 @@ export default function AddProjectModal({
                     label="Which institution should verify this?"
                     value={chosen}
                     onChange={setChosen}
+                    onTextChange={setTypedInstitution}
                     allowUnlisted={false}
                   />
-                  <p className="mt-2 text-xs text-ink-muted">
-                    Not on the list? The project stays Self-reported until your
-                    institution joins SkillCred.
-                  </p>
                 </div>
               )}
-              {canSend && (
-                <div className="rounded-lg border border-banner-line bg-banner p-3">
-                  <Toggle
-                    checked={askVerification}
-                    onChange={setAskVerification}
-                    label={`Ask ${targetName} to verify this`}
-                    description="Shows as Pending until they review it. Turn off to add it as Self-reported."
-                  />
-                </div>
-              )}
+              <div className="rounded-lg border border-banner-line bg-banner p-3">
+                <Toggle
+                  checked={sendsForVerification}
+                  onChange={setAskVerification}
+                  disabled={!canSend}
+                  label={`Ask ${targetName || typedInstitution.trim() || 'your institution'} to verify this`}
+                  description={
+                    canSend
+                      ? 'Shows as Pending until they review it. Turn off to add it as Self-reported.'
+                      : `${typedInstitution.trim() ? `${typedInstitution.trim()} hasn't` : "Your institution hasn't"} joined SkillCred yet, so this will be added as Self-reported. You can ask for verification later.`
+                  }
+                />
+              </div>
             </>
           )}
 

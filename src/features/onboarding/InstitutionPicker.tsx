@@ -10,6 +10,7 @@ type InstitutionPickerProps = {
   error?: string
   label?: string
   allowUnlisted?: boolean
+   onTextChange?: (text: string) => void
 }
 
 // Ignores capital letters, spaces and punctuation, so "altschool" finds "ALT School Academy"
@@ -21,6 +22,7 @@ export default function InstitutionPicker({
   error,
   label = 'Institution',
   allowUnlisted = true,
+  onTextChange
 }: InstitutionPickerProps) {
   const [query, setQuery] = useState(value?.name ?? '')
   const [all, setAll] = useState<Institution[] | null>(null) // null while loading
@@ -77,12 +79,14 @@ export default function InstitutionPicker({
   }, [typed, all, remote])
 
   function handleType(text: string) {
+     onTextChange?.(text)
     setQuery(text)
     setOpen(true)
     onChange(unlisted && text.trim() ? { id: null, name: text.trim() } : null)
   }
 
   function pick(institution: Institution) {
+    onTextChange?.(institution.name)
     setQuery(institution.name)
     setOpen(false)
     onChange(institution)

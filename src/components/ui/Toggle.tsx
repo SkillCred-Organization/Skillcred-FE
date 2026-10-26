@@ -3,16 +3,18 @@ type ToggleProps = {
   onChange: (value: boolean) => void
   label: string
   description?: string
+  disabled?: boolean
 }
 
-export default function Toggle({ checked, onChange, label, description }: ToggleProps) {
+export default function Toggle({ checked, onChange, label, description, disabled = false }: ToggleProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-start gap-3 text-left"
+      className={`flex w-full items-start gap-3 text-left ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
     >
       <span
         className={`mt-0.5 flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors ${

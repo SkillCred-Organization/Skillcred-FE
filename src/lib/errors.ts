@@ -9,8 +9,8 @@ const labels: Record<string, string> = {
   track: 'Track',
   startDate: 'Start date',
   endDate: 'End date',
-  proofLink: 'Project link',
-  link: 'Project link',
+  proofLink: 'Link',
+  link: 'Link',
 }
 const readable = (key: string) => labels[key] ?? key.replace(/([A-Z])/g, ' $1').toLowerCase()
 
@@ -53,6 +53,7 @@ export function errorText(err: unknown, fallback: string) {
   const fields = findFieldErrors(err)
   const first = fields ? Object.entries(fields)[0] : undefined
   if (first && first[1][0]) return `${readable(first[0])}: ${first[1][0]}`
+  if (/validation failed/i.test(err.message)) return 'The server rejected something in this form. Check each step and try again.'
   return err.message || fallback
 }
 
