@@ -136,3 +136,21 @@ export type PublicProfile = {
 }
 
 export type SkillItem = { name: string; verified: boolean }
+
+export type LearnerItem = {
+  id: string
+  title: string
+  issuer: string
+  date: string
+  link: string
+  status: Status
+  actions: ProjectActions
+  decision?: { reason: string; message: string }
+}
+
+export type NewLearnerItem = {
+  title: string
+  issuer: string
+  date: string
+  link: string
+}

@@ -474,7 +474,7 @@ const [typedInstitution, setTypedInstitution] = useState('')
           </dl>
 
           {!canPublish ? (
-            <InlineAlert variant="info" title="Saving doesn't send this for verification">
+              <InlineAlert variant="info" title="Saving doesn't send this for verification">
               Use Request verification on the project page when you are ready.
             </InlineAlert>
           ) : institutionLinked === null ? (
