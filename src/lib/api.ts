@@ -130,8 +130,8 @@ function projectMeta(p: ApiProject, status: Status) {
       return `Verified${suffix}`;
     case "pending":
       return `Sent for verification${suffix}`;
-    case "needs-changes":
-      return `Changes requested${suffix}`;
+       case 'needs-changes':
+      return `Changes requested${p.decision?.reason ? `: ${p.decision.reason}` : ''}${suffix}`
     case "team-confirmed":
       return `Confirmed by teammates${suffix}`;
     case "draft":
@@ -643,4 +643,17 @@ export async function withdrawItem(kind: ItemKind, id: string): Promise<LearnerI
 
 export async function deleteItem(kind: ItemKind, id: string): Promise<void> {
   await apiClient(`${itemPath(kind)}/${id}`, { method: 'DELETE' })
+}
+
+// Adds skills to the learner's profile without losing the ones already there.
+export async function addSkillsToProfile(names: string[]): Promise<void> {
+  const { profile } = await getProfile()
+  const raw: unknown[] = profile?.skills ?? []
+  const existing = raw
+    .map((s) => (typeof s === 'string' ? s : ((s as { name?: string }).name ?? '')))
+    .filter(Boolean)
+  const have = new Set(existing.map((s) => s.toLowerCase()))
+  const extra = names.filter((n) => !have.has(n.toLowerCase()))
+  if (extra.length === 0) return
+  await saveSkills([...existing, ...extra].slice(0, 20))
 }

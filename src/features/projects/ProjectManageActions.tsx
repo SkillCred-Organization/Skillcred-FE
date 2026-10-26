@@ -68,19 +68,22 @@ export default function ProjectManageActions({
         <AddProjectModal
           project={project}
           onClose={() => setEditing(false)}
-        onCreated={(saved) => {
+          onCreated={(saved) => {
   toast.success(
-    saved.status === 'pending'
-      ? 'Sent for verification.'
-      : project.status === 'draft' && saved.status !== 'draft'
-        ? 'Added to your projects.'
-        : saved.status === 'draft'
-          ? 'Draft saved.'
-          : 'Changes saved.',
+    project.status === 'needs-changes'
+      ? 'Changes saved. Press Request verification to send it again.'
+      : saved.status === 'pending'
+        ? 'Sent for verification.'
+        : project.status === 'draft' && saved.status !== 'draft'
+          ? 'Added to your projects.'
+          : saved.status === 'draft'
+            ? 'Draft saved.'
+            : 'Changes saved.',
   )
   if (saved.id !== project.id) navigate(`/app/projects/${saved.id}`, { replace: true })
   else getProject(project.id).then(onUpdated).catch(() => {})
 }}
+   
         />
       )}
 
