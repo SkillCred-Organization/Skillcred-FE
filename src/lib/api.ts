@@ -15,6 +15,8 @@ import type {
   PublicProfile,
   ShareSettings,
   SkillItem,
+  LearnerItem,
+  NewLearnerItem,
 } from "../types";
 import type { Claim } from "../types";
 import { buildDetails } from "./projectFields";
@@ -568,4 +570,77 @@ export async function getSkills(): Promise<SkillItem[]> {
 // Replaces the whole list, so always pass every skill the learner should have.
 export async function saveSkills(skills: string[]): Promise<void> {
   await apiClient('/api/learner/profile', { method: 'PATCH', body: JSON.stringify({ skills }) })
+}
+
+// ---------- Certifications and achievements (same calls as projects, different path) ----------
+
+export type ItemKind = 'certifications' | 'achievements'
+
+function toItem(p: ApiProject): LearnerItem {
+  const status = knownStatuses.includes(p.status as Status) ? (p.status as Status) : 'self-reported'
+  const hasDecision = p.decision?.reason || p.decision?.messageToLearner
+  return {
+    id: String(p.id ?? p._id ?? ''),
+    title: p.title,
+    issuer: p.summary ?? '',
+    date: p.startDate ?? '',
+    link: p.proofLink ?? '',
+    status,
+    actions: {
+      edit: p.actions?.edit ?? false,
+      requestVerification: p.actions?.requestVerification ?? false,
+      withdraw: p.actions?.withdraw ?? false,
+      delete: p.actions?.delete ?? false,
+    },
+    decision: hasDecision ? { reason: p.decision?.reason ?? '', message: p.decision?.messageToLearner ?? '' } : undefined,
+  }
+}
+
+function itemBody(input: NewLearnerItem) {
+  return clean({
+    title: input.title.trim(),
+    summary: input.issuer.trim(),
+    startDate: input.date || undefined,
+    proofLink: input.link.trim(),
+  })
+}
+
+const itemPath = (kind: ItemKind) => `/api/learner/${kind}`
+
+export async function getItems(kind: ItemKind): Promise<LearnerItem[]> {
+  const data = await apiClient<{ items: ApiProject[] }>(itemPath(kind))
+  return data.items.map(toItem)
+}
+
+export async function addItem(kind: ItemKind, input: NewLearnerItem): Promise<LearnerItem> {
+  const data = await apiClient<{ item: ApiProject }>(itemPath(kind), { method: 'POST', body: JSON.stringify(itemBody(input)) })
+  return toItem(data.item)
+}
+
+export async function updateItem(kind: ItemKind, id: string, input: NewLearnerItem): Promise<LearnerItem> {
+  const data = await apiClient<{ item: ApiProject }>(`${itemPath(kind)}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(itemBody(input)),
+  })
+  return toItem(data.item)
+}
+
+export async function requestItemVerification(kind: ItemKind, id: string, institutionId?: string): Promise<LearnerItem> {
+  const data = await apiClient<{ item: ApiProject }>(`${itemPath(kind)}/${id}/request-verification`, {
+    method: 'POST',
+    body: JSON.stringify(institutionId ? { institutionId } : {}),
+  })
+  return toItem(data.item)
+}
+
+export async function withdrawItem(kind: ItemKind, id: string): Promise<LearnerItem> {
+  const data = await apiClient<{ item: ApiProject }>(`${itemPath(kind)}/${id}/withdraw`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+  return toItem(data.item)
+}
+
+export async function deleteItem(kind: ItemKind, id: string): Promise<void> {
+  await apiClient(`${itemPath(kind)}/${id}`, { method: 'DELETE' })
 }

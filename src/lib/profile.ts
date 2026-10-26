@@ -13,7 +13,7 @@ export const learnerProfileApi = {
 
 export function profileUrl(profile: LearnerProfile | null | undefined): string | null {
   const handle = typeof profile?.handle === 'string' ? profile.handle.trim() : ''
-  return handle ? `https://skillcred.app/u/${encodeURIComponent(handle)}` : null
+  return handle ? `${window.location.origin}/u/${encodeURIComponent(handle)}` : null
 }
 
 export function suggestedProfileHandle(fullName: string): string {
