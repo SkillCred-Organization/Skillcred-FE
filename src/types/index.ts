@@ -89,10 +89,10 @@ export type Dashboard = {
     skills: DashboardStat
     achievements: DashboardStat
   }
- 
- banner: { verified: number; waiting: number; needsChanges: number }
-drafts: number
- activity: Activity[]
+
+  banner: { verified: number; waiting: number; needsChanges: number }
+  drafts: number
+  activity: Activity[]
 }
 
 export type Claim = {

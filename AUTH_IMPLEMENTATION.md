@@ -23,10 +23,11 @@ All HTTP calls go through `src/lib/apiClient.ts`. The shared client was imported
 - `/reset/check-email`: confirmation, 45-second resend cooldown, change email.
 - `/reset-password?token=...`: set a new password using the real email-link token.
 - `/password-updated`: successful reset confirmation.
-- `/verify-email?token=...`: redeem email verification; without a token, show verification instructions and resend for the signed-in account.
+- `/verify-email?token=...`: redeem email verification once, refresh the existing session and automatically open the account's dashboard after the server confirms `emailVerified`. Retry account-refresh failures without redeeming the link again. Without a token, show verification instructions and resend for the signed-in account.
+- The verification endpoint returns a confirmation, not an access token. A browser without a valid saved session shows verification success and a login link; the email verification token must never be saved as `auth_token`.
 - `/account-status`: pending institution review or missing institution setup.
 - Successful learner signup (email or Google): `/onboarding`.
-- Successful login (email or Google): `/app/dashboard` for both roles for now.
+- Successful login (email or Google): `/app/dashboard` for learners; verified admins go to `/admin/dashboard`, and unverified admins go to `/verify-email`.
 - First-time Google account completion follows the signup route; institution signup retains its verification/setup flow.
 
 ## Backend contract

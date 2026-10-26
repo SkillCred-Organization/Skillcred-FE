@@ -34,8 +34,8 @@ import ProjectDetailPage from "./features/projects/ProjectDetailPage";
 import NotFoundPage from "./components/pages/NotFoundPage";
 import VerificationOverviewPage from "./features/verification/VerificationOverviewPage";
 import SharePage from "./features/share/SharePage";
-import PublicProfilePage from "./features/public/PublicProfilePage";          
-import SkillsPage from "./features/skills/SkillsPage"; 
+import PublicProfilePage from "./features/public/PublicProfilePage";
+import SkillsPage from "./features/skills/SkillsPage";
 import CertificationsPage from "./features/items/CertificationsPage";
 import AchievementsPage from "./features/items/AchievementsPage";
 
@@ -73,7 +73,7 @@ export default function App() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="profile" element={<AdminProfile />} />
-        </Route> 
+        </Route>
       </Route>
       <Route element={<RequireAuth role="learner" />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
@@ -85,7 +85,7 @@ export default function App() {
           <Route path="certifications" element={<CertificationsPage />} />
           <Route path="skills" element={<SkillsPage />} />
           <Route path="achievements" element={<AchievementsPage />} />
-<Route path="verification" element={<VerificationOverviewPage />} />
+          <Route path="verification" element={<VerificationOverviewPage />} />
           <Route path="share" element={<SharePage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
