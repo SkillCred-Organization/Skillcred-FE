@@ -16,7 +16,7 @@ let requests = []
 function respond(body, status = 200) {
   globalThis.fetch = async (url, options) => { requests.push({ url, ...options }); return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }) }
 }
-beforeEach(() => { storage.clear(); requests = [] })
+beforeEach(() => { storage.clear(); requests = []; window.location = { origin: 'https://preview.example.test' } })
 afterEach(() => { globalThis.fetch = originalFetch })
 const session = { token: 'test-session', user: { id: 'test-user', role: 'learner', fullName: 'Test Learner', email: 'learner@example.test', emailVerified: true } }
 
@@ -162,10 +162,13 @@ test('profile lookup uses the authenticated learner endpoint and supports a miss
   assert.equal(requests[0].headers.get('Authorization'), 'Bearer test-session')
 })
 
-test('profile URLs use the saved handle and never invent a link for an unset profile', () => {
-  assert.equal(profileUrl({ handle: 'munachi-david-2' }), 'https://skillcred.app/u/munachi-david-2')
-  for (const profile of [undefined, null, {}, { handle: '' }, { handle: '  ' }]) assert.equal(profileUrl(profile), null)
-  assert.equal(profileUrl({ handle: 'name/other?query' }), 'https://skillcred.app/u/name%2Fother%3Fquery')
+test('profile URLs use the current website and saved handle without inventing unset links', () => {
+  for (const origin of ['https://preview.example.test', 'http://localhost:3000']) {
+    window.location = { origin }
+    assert.equal(profileUrl({ handle: 'munachi-david-2' }), `${origin}/u/munachi-david-2`)
+    for (const profile of [undefined, null, {}, { handle: '' }, { handle: '  ' }]) assert.equal(profileUrl(profile), null)
+    assert.equal(profileUrl({ handle: 'name/other?query' }), `${origin}/u/name%2Fother%3Fquery`)
+  }
   assert.equal(suggestedProfileHandle('  Munachi David  '), 'munachi-david')
 })
 
@@ -179,7 +182,7 @@ test('handle availability is encoded and saving changes only the handle field', 
   const saved = await learnerProfileApi.saveHandle('munachi-david')
   assert.equal(requests[1].method, 'PATCH')
   assert.deepEqual(JSON.parse(requests[1].body), { handle: 'munachi-david' })
-  assert.equal(profileUrl(saved.profile), 'https://skillcred.app/u/munachi-david')
+  assert.equal(profileUrl(saved.profile), 'https://preview.example.test/u/munachi-david')
 })
 
 test('a taken profile handle preserves the signed-in session and the server error', async () => {
