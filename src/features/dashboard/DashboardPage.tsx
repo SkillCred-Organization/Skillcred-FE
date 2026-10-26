@@ -105,8 +105,19 @@ function DashboardContent({ data, institution, onAdd }: ContentProps) {
 
   return (
     <>
-      {isEmpty ? (
-        <FirstTimeCard onAdd={onAdd} />
+         {isEmpty ? (
+        data.drafts > 0 ? (
+          <InlineAlert
+            variant="info"
+            title={`You have ${data.drafts} ${data.drafts === 1 ? 'draft' : 'drafts'}`}
+            actionLabel="Open projects"
+            onAction={() => navigate('/app/projects')}
+          >
+            Drafts are private and aren&apos;t counted here. Finish one and send it to start getting verified.
+          </InlineAlert>
+        ) : (
+          <FirstTimeCard onAdd={onAdd} />
+        )
       ) : sent > 0 ? (
         <VerificationBanner
           institution={institution}
@@ -114,6 +125,7 @@ function DashboardContent({ data, institution, onAdd }: ContentProps) {
           total={sent}
           waiting={data.banner.waiting}
           needsChanges={data.banner.needsChanges}
+          onShare={() => navigate('/app/share')}
         />
       ) : (
         <InlineAlert
@@ -245,6 +257,15 @@ export default function DashboardPage() {
       ) : (
         <DashboardContent data={dashboard} institution={institution} onAdd={() => setAdding(true)} />
       )}
+
+        <button
+    type="button"
+    aria-label="Add project"
+    onClick={() => setAdding(true)}
+    className="fixed bottom-20 right-4 z-10 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg hover:bg-brand-dark md:hidden"
+  >
+    <Plus className="size-6" />
+  </button>
 
       {adding && (
         <AddProjectModal

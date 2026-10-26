@@ -7,6 +7,7 @@ type VerificationBannerProps = {
   total: number
   waiting: number
   needsChanges: number
+  onShare?: () => void
 }
 
 export default function VerificationBanner({
@@ -15,6 +16,7 @@ export default function VerificationBanner({
   total,
   waiting,
   needsChanges,
+  onShare
 }: VerificationBannerProps) {
   const percent = total === 0 ? 0 : Math.round((verified / total) * 100)
   const allVerified = total > 0 && verified === total
@@ -45,7 +47,8 @@ export default function VerificationBanner({
         </div>
       </div>
 
-      <Button variant="accent" icon={<Share2 className="size-4" />}>
+      <Button  onClick={onShare} variant="accent" icon={<Share2 className="size-4" />}
+      className="w-full md:w-auto">
         Share profile
       </Button>
     </section>

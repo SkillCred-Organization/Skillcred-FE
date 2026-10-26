@@ -103,7 +103,7 @@ export default function OnboardingPage() {
   async function next() {
     let valid = await trigger(stepFields[step]);
     if (step === 1 && !institution?.name.trim()) {
-      setInstitutionError("Search for your institution, or type its name");
+      setInstitutionError(`Pick your institution from the list, or tap "My institution isn't listed"`);
       valid = false;
     }
     if (valid) setStep((s) => s + 1);

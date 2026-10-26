@@ -7,11 +7,11 @@ export default defineConfig({
   server: {
   port: 3000,
   strictPort: true,
-  proxy: {
-    '/api': {
-      target: 'https://skillcred-backend-fc5i.onrender.com',
-      changeOrigin: true,
+    proxy: {
+      '/api': {
+        target: 'https://skillcred-be-development-pmhe.onrender.com',
+        changeOrigin: true,
+      },
     },
-  },
 },
 })

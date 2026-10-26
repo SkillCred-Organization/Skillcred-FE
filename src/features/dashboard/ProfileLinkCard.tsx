@@ -5,7 +5,7 @@ import Input from '../../components/ui/Input'
 import { ApiError } from '../../lib/apiClient'
 import { learnerProfileApi, profileUrl, suggestedProfileHandle, type LearnerProfile } from '../../lib/profile'
 import { useToast } from '../../components/ui/toastContext'
-
+import {Link } from 'react-router-dom'
 
 export default function ProfileLinkCard({ fullName }: { fullName: string }) {
   const [profile, setProfile] = useState<LearnerProfile | null>()
@@ -82,6 +82,7 @@ export default function ProfileLinkCard({ fullName }: { fullName: string }) {
         <Button size="sm" onClick={copyLink} icon={copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}>
           {copied ? 'Copied' : 'Copy link'}
         </Button>
+          <Link to="/app/share" className="ml-3 text-sm text-brand underline">Sharing settings</Link>
         {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
       </> : <form onSubmit={saveHandle} aria-busy={saving}>
         <p className="mb-3 text-sm text-ink-muted">Choose a unique handle for your profile link.</p>

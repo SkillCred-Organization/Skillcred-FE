@@ -1,35 +1,39 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import Toast from './Toast'
-import { ToastContext } from './toastContext'
-import type { ToastApi, ToastKind, ToastOptions } from './toastContext'
+import { useCallback, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import Toast from "./Toast";
+import { ToastContext } from "./toastContext";
+import type { ToastApi, ToastKind, ToastOptions } from "./toastContext";
 
-type ToastItem = ToastOptions & { id: number; kind: ToastKind; message: string }
+type ToastItem = ToastOptions & {
+  id: number;
+  kind: ToastKind;
+  message: string;
+};
 
 export default function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([])
-  const nextId = useRef(0)
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const nextId = useRef(0);
 
   const dismiss = useCallback((id: number) => {
-    setToasts((list) => list.filter((t) => t.id !== id))
-  }, [])
+    setToasts((list) => list.filter((t) => t.id !== id));
+  }, []);
 
   const show = useCallback(
     (kind: ToastKind, message: string, options: ToastOptions = {}) => {
-      const id = nextId.current++
-      setToasts((list) => [...list, { id, kind, message, ...options }])
-      if (kind === 'success') setTimeout(() => dismiss(id), 6000) // success closes after 6 s; errors stay until closed
+      const id = nextId.current++;
+      setToasts((list) => [...list, { id, kind, message, ...options }]);
+      setTimeout(() => dismiss(id), kind === "success" ? 6000 : 8000);
     },
     [dismiss],
-  )
+  );
 
   const api = useMemo<ToastApi>(
     () => ({
-      success: (message, options) => show('success', message, options),
-      error: (message, options) => show('error', message, options),
+      success: (message, options) => show("success", message, options),
+      error: (message, options) => show("error", message, options),
     }),
     [show],
-  )
+  );
 
   return (
     <ToastContext.Provider value={api}>
@@ -47,5 +51,5 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
         ))}
       </div>
     </ToastContext.Provider>
-  )
+  );
 }

@@ -4,7 +4,7 @@ import { Eye, EyeOff, TriangleAlert } from 'lucide-react'
 
 type InputProps = ComponentProps<'input'> & {
   label: string
-  helperText?: string
+  helperText?: ReactNode
   error?: string
   icon?: ReactNode
 }
