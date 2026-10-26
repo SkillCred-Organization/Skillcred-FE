@@ -10,10 +10,10 @@ import Select from "../../components/ui/Select";
 import Stepper from "../../components/ui/Stepper";
 import Textarea from "../../components/ui/Textarea";
 import Toggle from "../../components/ui/Toggle";
-import { addProject, deleteProject, getProfile, updateProject } from "../../lib/api";
+import { addProject, deleteProject, getProfile, updateProject, addSkillsToProfile } from "../../lib/api";
 import { errorText } from "../../lib/errors";
 import { projectTracks } from "../../lib/options";
-import { detailFields } from "../../lib/projectFields";
+import { detailFields, skillSuggestionsFor, skillsKeyFor} from "../../lib/projectFields";
 import type { DetailKey } from "../../lib/projectFields";
 import type {
   Institution,
@@ -24,6 +24,8 @@ import type {
 } from "../../types";
 import InstitutionPicker from "../onboarding/InstitutionPicker";
 import { isHttpsUrl, LINK_MESSAGE } from "../../lib/validators";
+import SkillTagInput from "../../components/ui/SkillTagInput";
+
 
 type FormValues = {
   title: string;
@@ -106,6 +108,7 @@ const [typedInstitution, setTypedInstitution] = useState('')
     getValues,
     control,
     formState: { errors },
+    setValue
   } = useForm<FormValues>({
     mode: "onTouched",
     defaultValues: project
@@ -127,6 +130,21 @@ const [typedInstitution, setTypedInstitution] = useState('')
   const remaining = SUMMARY_MAX - summary.length;
   const overLimit = remaining < 0;
   const trackFields = detailFields[track ?? ""] ?? [];
+
+    const skillsKey = skillsKeyFor(track ?? '')
+  const skillsName = skillsKey ? (`details.${skillsKey}` as const) : null
+  const skillsText = useWatch({ control, name: skillsName ?? 'details.techStack' })
+  const skills = skillsName
+    ? (skillsText ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : []
+  const moreFields = trackFields.filter((f) => f.key !== skillsKey)
+
+  function setSkills(next: string[]) {
+    if (skillsName) setValue(skillsName, next.join(', '), { shouldDirty: true })
+  }
 
   const people = hasTeam ? teammates : [];
   const mateValid =
@@ -175,6 +193,9 @@ const [typedInstitution, setTypedInstitution] = useState('')
           }
         }
       }
+
+            if (status !== 'draft' && skills.length > 0) addSkillsToProfile(skills).catch(() => {})
+
       onCreated(saved)
       onClose()
     } catch (err) {
@@ -330,7 +351,17 @@ const [typedInstitution, setTypedInstitution] = useState('')
             })}
           />
 
-          {trackFields.length > 0 && (
+            {skillsKey && (
+    <SkillTagInput
+      label="Skills used in this project"
+      value={skills}
+      onChange={setSkills}
+      suggestions={skillSuggestionsFor(track ?? '')}
+      helperText="They become Verified on your profile once your institution verifies this project."
+    />
+  )}
+
+          {moreFields.length > 0 && (
             <details
               className="rounded-lg border border-line"
               open={editing && Object.keys(project?.details ?? {}).length > 0}
@@ -339,7 +370,7 @@ const [typedInstitution, setTypedInstitution] = useState('')
                 More about this project (optional)
               </summary>
               <div className="space-y-3 border-t border-line p-3">
-                {trackFields.map((f) => {
+                {moreFields.map((f) => {
                   const name = `details.${f.key}` as const;
                   const message = errors.details?.[f.key]?.message;
                   if (f.kind === "long") {

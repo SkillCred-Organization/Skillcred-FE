@@ -35,6 +35,7 @@ export const detailFields: Record<string, DetailField[]> = {
     { key: 'frameworks', label: 'Frameworks', kind: 'list', placeholder: 'User stories, RICE' },
     { key: 'outcome', label: 'Outcome', kind: 'long', placeholder: 'e.g. Reached 100 users in a month' },
     { key: 'roadmapUrl', label: 'Roadmap or board link', kind: 'link', placeholder: 'https://' },
+        { key: 'tools', label: 'Tools', kind: 'list', placeholder: 'Jira, Notion' },
   ],
 }
 
@@ -52,3 +53,19 @@ export function buildDetails(track: string, values: Partial<Record<string, strin
   }
   return out
 }
+
+// Which part of the project holds the skills the backend verifies (techStack or tools)
+export function skillsKeyFor(track: string): DetailKey | null {
+  if (track === 'software_engineering') return 'techStack'
+  if (['product_design', 'data_analysis', 'product_management'].includes(track)) return 'tools'
+  return null
+}
+
+const suggestionsByTrack: Record<string, string[]> = {
+  software_engineering: ['React', 'TypeScript', 'Node.js', 'Express', 'PostgreSQL', 'Docker', 'Git', 'REST APIs'],
+  product_design: ['Figma', 'User research', 'Prototyping', 'Design systems', 'Usability testing'],
+  data_analysis: ['Python', 'SQL', 'Excel', 'Power BI', 'Pandas', 'Tableau'],
+  product_management: ['Jira', 'Roadmapping', 'User stories', 'Analytics', 'Notion'],
+}
+
+export const skillSuggestionsFor = (track: string) => suggestionsByTrack[track] ?? []
