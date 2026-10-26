@@ -14,9 +14,11 @@ import type {
   PublicItem,
   PublicProfile,
   ShareSettings,
+  SkillItem,
 } from "../types";
 import type { Claim } from "../types";
 import { buildDetails } from "./projectFields";
+
 
 // ---------- Profile and onboarding ----------
 
@@ -538,4 +540,32 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile> {
     ),
     stats: { verified: p.stats?.verified ?? 0, total: p.stats?.total ?? 0 },
   }
+}
+
+// ---------- Skills ----------
+
+type ApiDashSkills = { skills?: (string | { name?: string; verified?: boolean })[] }
+
+// The names come from the profile; which ones are verified comes from the dashboard.
+export async function getSkills(): Promise<SkillItem[]> {
+  const [{ profile }, dash] = await Promise.all([
+    getProfile(),
+    apiClient<ApiDashSkills>('/api/learner/dashboard').catch((): ApiDashSkills => ({})),
+  ])
+  const verified = new Set(
+    (dash.skills ?? [])
+      .map((s) => (typeof s === 'string' ? null : s))
+      .filter((s): s is { name?: string; verified?: boolean } => s !== null && Boolean(s.verified))
+      .map((s) => (s.name ?? '').toLowerCase()),
+  )
+  const raw: unknown[] = profile?.skills ?? []
+  const names = raw
+    .map((s) => (typeof s === 'string' ? s : ((s as { name?: string }).name ?? '')))
+    .filter(Boolean)
+  return names.map((name) => ({ name, verified: verified.has(name.toLowerCase()) }))
+}
+
+// Replaces the whole list, so always pass every skill the learner should have.
+export async function saveSkills(skills: string[]): Promise<void> {
+  await apiClient('/api/learner/profile', { method: 'PATCH', body: JSON.stringify({ skills }) })
 }

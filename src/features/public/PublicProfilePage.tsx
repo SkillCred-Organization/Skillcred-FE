@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Check, Mail, MapPin, ShieldCheck, TriangleAlert } from 'lucide-react'
+import { Award, Code, Mail, MapPin, ShieldCheck, Star, TriangleAlert } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -18,24 +19,58 @@ const initials = (name: string) =>
     .map((w) => w[0].toUpperCase())
     .join('')
 
-function Section({ title, items }: { title: string; items: PublicItem[] }) {
+function caption(item: PublicItem, firstName: string) {
+  if (item.verifiedBy) return `Verified by ${item.verifiedBy}`
+  if (item.status === 'verified') return 'Verified by the institution'
+  if (item.status === 'team-confirmed') return 'Confirmed by teammates'
+  if (item.status === 'self-reported') return `Added by ${firstName}`
+  return ''
+}
+
+function Tile({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-cream text-ink-muted">
+      <Icon className="size-4" />
+    </span>
+  )
+}
+
+type SectionProps = { title: string; icon: LucideIcon; items: PublicItem[]; firstName: string }
+
+function Section({ title, icon, items, firstName }: SectionProps) {
   if (items.length === 0) return null
   return (
     <section>
       <h2 className="mb-2 text-base font-semibold text-ink">{title}</h2>
       <ul className="divide-y divide-line rounded-xl border border-line bg-white">
         {items.map((item) => (
-          <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-            <div className="min-w-0 flex-1 basis-48">
+          <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+            <Tile icon={icon} />
+            <div className="min-w-0 flex-1 basis-40">
               <p className="font-medium text-ink">{item.title}</p>
               {item.summary && <p className="text-sm text-ink-muted">{item.summary}</p>}
-              {item.verifiedBy && <p className="text-xs text-ink-muted">Verified by {item.verifiedBy}</p>}
+              <p className="text-xs text-ink-muted">{caption(item, firstName)}</p>
             </div>
             <Badge status={item.status} />
           </li>
         ))}
       </ul>
     </section>
+  )
+}
+
+type SkillRowProps = { names: string[]; note: string; status: 'verified' | 'self-reported' }
+
+function SkillRow({ names, note, status }: SkillRowProps) {
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+      <Tile icon={Star} />
+      <div className="min-w-0 flex-1 basis-40">
+        <p className="font-medium text-ink">{names.join(' · ')}</p>
+        <p className="text-xs text-ink-muted">{note}</p>
+      </div>
+      <Badge status={status} />
+    </li>
   )
 }
 
@@ -62,21 +97,23 @@ export default function PublicProfilePage() {
   }, [handle, attempt])
 
   const firstName = profile?.fullName.split(' ')[0] || 'the learner'
+  const verifiedSkills = profile?.skills.filter((s) => s.verified) ?? []
+  const otherSkills = profile?.skills.filter((s) => !s.verified) ?? []
 
   return (
     <div className="min-h-screen bg-page">
       <header className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link to="/">
             <img src="/logo.svg" alt="SkillCred" className="h-6" />
           </Link>
-          <Link to="/user-type" className="text-sm font-medium text-brand hover:underline">
+          <Link to="/user-type" className="text-sm font-medium text-brand underline underline-offset-2">
             Create your own
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
+      <main className="mx-auto max-w-2xl space-y-5 px-4 py-6">
         {state === 'loading' ? (
           <div role="status" aria-label="Loading profile" className="space-y-4">
             <Skeleton className="h-32 w-full" />
@@ -149,33 +186,37 @@ export default function PublicProfilePage() {
             </section>
 
             <section className="rounded-xl border border-line bg-white p-4 text-sm">
-              <p className="mb-2 font-medium text-ink">What the labels mean</p>
-              <ul className="space-y-2 text-ink-muted">
-                <li className="flex items-center gap-2"><Badge status="verified" /> Confirmed by the institution</li>
-                <li className="flex items-center gap-2"><Badge status="team-confirmed" /> Confirmed by teammates</li>
-                <li className="flex items-center gap-2"><Badge status="self-reported" /> Added by {firstName}</li>
+              <p className="mb-3 font-medium text-ink">What the labels mean</p>
+              <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
+                <li className="flex items-center gap-2">
+                  <Badge status="verified" />
+                  <span className="text-ink-muted">by the institution</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Badge status="team-confirmed" />
+                  <span className="text-ink-muted">by teammates</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Badge status="self-reported" />
+                  <span className="text-ink-muted">by {firstName}</span>
+                </li>
               </ul>
             </section>
 
-            <Section title="Projects" items={profile.projects} />
-            <Section title="Certifications" items={profile.certifications} />
-            <Section title="Achievements" items={profile.achievements} />
+            <Section title="Projects" icon={Code} items={profile.projects} firstName={firstName} />
+            <Section title="Certifications" icon={Award} items={profile.certifications} firstName={firstName} />
+            <Section title="Achievements" icon={Star} items={profile.achievements} firstName={firstName} />
 
             {profile.skills.length > 0 && (
               <section>
                 <h2 className="mb-2 text-base font-semibold text-ink">Skills</h2>
-                <ul className="flex flex-wrap gap-2">
-                  {profile.skills.map((s) => (
-                    <li
-                      key={s.name}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
-                        s.verified ? 'bg-verified-bg text-verified-text' : 'bg-sand text-ink'
-                      }`}
-                    >
-                      {s.verified && <Check className="size-3" />}
-                      {s.name}
-                    </li>
-                  ))}
+                <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+                  {verifiedSkills.length > 0 && (
+                    <SkillRow names={verifiedSkills.map((s) => s.name)} note="Verified through programme" status="verified" />
+                  )}
+                  {otherSkills.length > 0 && (
+                    <SkillRow names={otherSkills.map((s) => s.name)} note={`Added by ${firstName}`} status="self-reported" />
+                  )}
                 </ul>
               </section>
             )}

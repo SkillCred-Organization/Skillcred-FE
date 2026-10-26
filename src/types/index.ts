@@ -134,3 +134,5 @@ export type PublicProfile = {
   skills: { name: string; verified: boolean }[]
   stats: { verified: number; total: number }
 }
+
+export type SkillItem = { name: string; verified: boolean }

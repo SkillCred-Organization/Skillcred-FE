@@ -36,6 +36,7 @@ import NotFoundPage from "./components/pages/NotFoundPage";
 import VerificationOverviewPage from "./features/verification/VerificationOverviewPage";
 import SharePage from "./features/share/SharePage";
 import PublicProfilePage from "./features/public/PublicProfilePage";
+import SkillsPage from "./features/skills/SkillsPage"; 
 
 const stub = (title: string) => <ComingSoon title={title} />;
 
@@ -81,7 +82,7 @@ export default function App() {
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
           <Route path="certifications" element={stub("Certifications")} />
-          <Route path="skills" element={stub("Skills")} />
+          <Route path="skills" element={<SkillsPage />} />
           <Route path="achievements" element={stub("Achievements")} />
 <Route path="verification" element={<VerificationOverviewPage />} />
           <Route path="share" element={<SharePage />} />
