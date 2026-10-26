@@ -31,12 +31,14 @@ import AdminSettings, {
 import SettingsPage from "./features/settings/SettingsPage";
 import TeammateConfirmationPage from "./components/pages/TeammateConfirmationPage";
 import ProjectDetailPage from "./features/projects/ProjectDetailPage";
-import ComingSoon from "./components/ui/ComingSoon";
 import NotFoundPage from "./components/pages/NotFoundPage";
 import VerificationOverviewPage from "./features/verification/VerificationOverviewPage";
+import SharePage from "./features/share/SharePage";
+import PublicProfilePage from "./features/public/PublicProfilePage";
+import SkillsPage from "./features/skills/SkillsPage"; 
+import CertificationsPage from "./features/items/CertificationsPage";
+import AchievementsPage from "./features/items/AchievementsPage";
 
-
-const stub = (title: string) => <ComingSoon title={title} />;
 
 export default function App() {
   return (
@@ -71,7 +73,7 @@ export default function App() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="profile" element={<AdminProfile />} />
-        </Route>
+        </Route> 
       </Route>
       <Route element={<RequireAuth role="learner" />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
@@ -80,16 +82,17 @@ export default function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
-          <Route path="certifications" element={stub("Certifications")} />
-          <Route path="skills" element={stub("Skills")} />
-          <Route path="achievements" element={stub("Achievements")} />
+          <Route path="certifications" element={<CertificationsPage />} />
+          <Route path="skills" element={<SkillsPage />} />
+          <Route path="achievements" element={<AchievementsPage />} />
 <Route path="verification" element={<VerificationOverviewPage />} />
-          <Route path="share" element={stub("Share profile")} />
+          <Route path="share" element={<SharePage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />
+      <Route path="/u/:handle" element={<PublicProfilePage />} />
     </Routes>
   );
 }

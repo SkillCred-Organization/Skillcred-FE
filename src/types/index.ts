@@ -43,6 +43,7 @@ export type NewProject = {
   teammates: Teammate[]
   status: 'pending' | 'self-reported' | 'draft'
   details?: DetailValues
+  institutionId?: string
 }
 
 export type Institution = { id: string | null; name: string }
@@ -104,3 +105,52 @@ export type Claim = {
 }
 
 export type DetailValues = Partial<Record<string, string>>
+
+export type ShareSettings = {
+  isPublic: boolean
+  showPendingAndSelfReported: boolean
+  showEmail: boolean
+}
+
+export type PublicItem = {
+  id: string
+  title: string
+  summary: string
+  status: Status
+  verifiedBy: string
+}
+
+export type PublicProfile = {
+  fullName: string
+  handle: string
+  headline: string
+  location: string
+  bio: string
+  email: string
+  institution: string
+  projects: PublicItem[]
+  certifications: PublicItem[]
+  achievements: PublicItem[]
+  skills: { name: string; verified: boolean }[]
+  stats: { verified: number; total: number }
+}
+
+export type SkillItem = { name: string; verified: boolean }
+
+export type LearnerItem = {
+  id: string
+  title: string
+  issuer: string
+  date: string
+  link: string
+  status: Status
+  actions: ProjectActions
+  decision?: { reason: string; message: string }
+}
+
+export type NewLearnerItem = {
+  title: string
+  issuer: string
+  date: string
+  link: string
+}

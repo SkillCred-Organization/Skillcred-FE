@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import type { Path } from "react-hook-form";
 import { Info, Link2, Plus, X } from "lucide-react";
 import Button from "../../components/ui/Button";
 import InlineAlert from "../../components/ui/InlineAlert";
@@ -7,15 +8,22 @@ import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
 import Select from "../../components/ui/Select";
 import Stepper from "../../components/ui/Stepper";
+import Textarea from "../../components/ui/Textarea";
 import Toggle from "../../components/ui/Toggle";
-import { addProject, getProfile, updateProject } from "../../lib/api";
+import { addProject, deleteProject, getProfile, updateProject } from "../../lib/api";
 import { errorText } from "../../lib/errors";
 import { projectTracks } from "../../lib/options";
-import type { NewProject, Project, ProjectDetail, Teammate } from "../../types";
-import type { Path } from "react-hook-form";
-import Textarea from "../../components/ui/Textarea";
 import { detailFields } from "../../lib/projectFields";
 import type { DetailKey } from "../../lib/projectFields";
+import type {
+  Institution,
+  NewProject,
+  Project,
+  ProjectDetail,
+  Teammate,
+} from "../../types";
+import InstitutionPicker from "../onboarding/InstitutionPicker";
+import { isHttpsUrl, LINK_MESSAGE } from "../../lib/validators";
 
 type FormValues = {
   title: string;
@@ -28,6 +36,7 @@ type FormValues = {
   details: Partial<Record<DetailKey, string>>;
 };
 
+const SUMMARY_MAX = 120;
 const steps = ["Basics", "Proof & team", "Review"];
 const stepFields: (keyof FormValues)[][] = [
   ["title", "summary", "role", "track", "startDate", "endDate"],
@@ -56,6 +65,9 @@ export default function AddProjectModal({
   project,
 }: AddProjectModalProps) {
   const editing = Boolean(project);
+  const isDraftEdit = project?.status === "draft";
+  const canPublish = !editing || isDraftEdit; // a new project, or a draft being finished
+
   const [step, setStep] = useState(0);
   const [hasTeam, setHasTeam] = useState((project?.teammates.length ?? 0) > 0);
   const [teammates, setTeammates] = useState<Teammate[]>(
@@ -66,19 +78,27 @@ export default function AddProjectModal({
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [institutionName, setInstitutionName] = useState("your institution");
-  const [institutionLinked, setInstitutionLinked] = useState(true);
+  const [institutionLinked, setInstitutionLinked] = useState<boolean | null>(
+    canPublish ? null : true,
+  );
+  const [chosen, setChosen] = useState<Institution | null>(null);
+const [typedInstitution, setTypedInstitution] = useState('')
+
 
   useEffect(() => {
-    if (editing) return;
+    if (!canPublish) return;
     getProfile()
       .then(({ profile }) => {
-        if (profile?.institution?.name)
-          setInstitutionName(profile.institution.name);
-                const inst = profile?.institution
-        setInstitutionLinked(Boolean(inst && (inst.institutionId || inst.id) && !inst.selfReported))
+        const inst = profile?.institution;
+        if (inst?.name) setInstitutionName(inst.name);
+        setInstitutionLinked(
+          Boolean(
+            inst && (inst.institutionId || inst.id) && !inst.selfReported,
+          ),
+        );
       })
-      .catch(() => {});
-  }, [editing]);
+      .catch(() => setInstitutionLinked(false));
+  }, [canPublish]);
 
   const {
     register,
@@ -102,13 +122,19 @@ export default function AddProjectModal({
       : undefined,
   });
 
+  const summary = useWatch({ control, name: "summary" }) ?? "";
   const track = useWatch({ control, name: "track" });
-  const trackFields = detailFields[track] ?? [];
+  const remaining = SUMMARY_MAX - summary.length;
+  const overLimit = remaining < 0;
+  const trackFields = detailFields[track ?? ""] ?? [];
+
   const people = hasTeam ? teammates : [];
-  const sendsForVerification = askVerification && institutionLinked;
   const mateValid =
     mate.name.trim() !== "" && /^\S+@\S+\.\S+$/.test(mate.email);
   const values = getValues();
+  const canSend = institutionLinked === true || Boolean(chosen?.id);
+  const sendsForVerification = askVerification && canSend;
+  const targetName = institutionLinked ? institutionName : (chosen?.name ?? "");
 
   async function next() {
     const linkFields = trackFields
@@ -125,28 +151,35 @@ export default function AddProjectModal({
     setMate({ name: "", email: "", role: "" });
   }
 
-  async function submit(status: NewProject["status"]) {
-    setSaving(true);
-    setSubmitError("");
+  async function submit(status: NewProject['status']) {
+    setSaving(true)
+    setSubmitError('')
     try {
-      const fields: NewProject = {
-  ...getValues(),
-  teammates: people,
-  status: status,
-};
-      const saved = project
-        ? await updateProject(project.id, fields)
-        : await addProject({ ...fields, status });
-      onCreated(saved);
-      onClose();
+      const fields = { ...getValues(), teammates: people }
+      let saved: Project
+      if (project && (!isDraftEdit || status === 'draft')) {
+        saved = await updateProject(project.id, fields) // plain save, status unchanged
+      } else {
+        // A new project, or a finished draft. A draft becomes a project by creating it properly
+        // and removing the draft, because only these calls are documented by the backend.
+        saved = await addProject({
+          ...fields,
+          status,
+          institutionId: status === 'pending' ? chosen?.id ?? undefined : undefined,
+        })
+        if (project) {
+          try {
+            await deleteProject(project.id)
+          } catch {
+             // the project exists now; a leftover draft can be deleted by hand
+          }
+        }
+      }
+      onCreated(saved)
+      onClose()
     } catch (err) {
-      setSaving(false);
-      setSubmitError(
-        errorText(
-          err,
-          "Couldn't save your project. Check your connection and try again.",
-        ),
-      );
+      setSaving(false)
+      setSubmitError(errorText(err, "Couldn't save your project. Check your connection and try again."))
     }
   }
 
@@ -162,25 +195,28 @@ export default function AddProjectModal({
         </Button>
       )}
       <div className="flex items-center gap-2">
-        {!editing && (
+        {canPublish && (
           <Button
             variant="soft"
-            disabled={saving}
+            disabled={saving || overLimit}
             onClick={() => submit("draft")}
           >
             Save draft
           </Button>
         )}
         {step < 2 ? (
-          <Button onClick={next}>Next</Button>
+          <Button disabled={overLimit} onClick={next}>
+            Next
+          </Button>
         ) : (
           <Button
             loading={saving}
+            disabled={overLimit}
             onClick={() =>
               submit(sendsForVerification ? "pending" : "self-reported")
             }
           >
-            {editing
+            {!canPublish
               ? "Save changes"
               : sendsForVerification
                 ? "Submit project"
@@ -193,11 +229,27 @@ export default function AddProjectModal({
 
   return (
     <Modal
-      title={editing ? "Edit project" : "Add a project"}
+      title={
+        editing
+          ? isDraftEdit
+            ? "Finish your draft"
+            : "Edit project"
+          : "Add a project"
+      }
       onClose={onClose}
       header={<Stepper steps={steps} current={step} />}
       footer={footer}
     >
+      {submitError && (
+        <InlineAlert
+          variant="error"
+          title="Couldn't save your project"
+          className="mb-4"
+        >
+          {submitError}
+        </InlineAlert>
+      )}
+
       {step === 0 && (
         <div className="space-y-4">
           <Input
@@ -210,6 +262,14 @@ export default function AddProjectModal({
           <Input
             label="One-line summary"
             placeholder="What did you build?"
+            helperText={
+              <span className="flex items-center justify-between gap-3">
+                <span>Maximum {SUMMARY_MAX} characters</span>
+                <span className={overLimit ? "font-medium text-error" : ""}>
+                  {remaining}
+                </span>
+              </span>
+            }
             error={errors.summary?.message}
             {...register("summary", { required: "Add a short summary" })}
           />
@@ -262,14 +322,11 @@ export default function AddProjectModal({
             label="Project link"
             icon={<Link2 className="size-4" />}
             placeholder="https://github.com/you/project"
-            helperText="GitHub, Figma, your portfolio or any public page. Must start with https://"
+            helperText="GitHub, Figma, your portfolio or any public page. Use the full address, like https://github.com/you/project"
             error={errors.link?.message}
             {...register("link", {
               required: "Add a link to your work",
-              pattern: {
-                value: /^https:\/\/\S+$/i,
-                message: "Links must start with https://",
-              },
+              validate: (v) => isHttpsUrl(v) || LINK_MESSAGE,
             })}
           />
 
@@ -311,10 +368,8 @@ export default function AddProjectModal({
                         name,
                         f.kind === "link"
                           ? {
-                              pattern: {
-                                value: /^https:\/\/\S+$/i,
-                                message: "Links must start with https://",
-                              },
+                              validate: (v) =>
+                                !v || isHttpsUrl(v) || LINK_MESSAGE,
                             }
                           : undefined,
                       )}
@@ -418,30 +473,39 @@ export default function AddProjectModal({
             />
           </dl>
 
-          {editing ? (
-            <InlineAlert
-              variant="info"
-              title="Saving doesn't send this for verification"
-            >
+          {!canPublish ? (
+            <InlineAlert variant="info" title="Saving doesn't send this for verification">
               Use Request verification on the project page when you are ready.
             </InlineAlert>
-          ) : !institutionLinked ? (
-            <InlineAlert
-              variant="info"
-              title="Your institution isn't connected yet"
-            >
-              Your work stays Self-reported until your institution joins
-              SkillCred.
-            </InlineAlert>
+          ) : institutionLinked === null ? (
+            <p className="text-sm text-ink-muted">Checking your institution…</p>
           ) : (
-            <div className="rounded-lg border border-banner-line bg-banner p-3">
-              <Toggle
-                checked={askVerification}
-                onChange={setAskVerification}
-                label={`Ask ${institutionName} to verify this`}
-                description="Shows as Pending until they review it. Turn off to add it as Self-reported."
-              />
-            </div>
+            <>
+              {!institutionLinked && (
+                <div className="rounded-lg border border-line p-3">
+                  <InstitutionPicker
+                    label="Which institution should verify this?"
+                    value={chosen}
+                    onChange={setChosen}
+                    onTextChange={setTypedInstitution}
+                    allowUnlisted={false}
+                  />
+                </div>
+              )}
+              <div className="rounded-lg border border-banner-line bg-banner p-3">
+                <Toggle
+                  checked={sendsForVerification}
+                  onChange={setAskVerification}
+                  disabled={!canSend}
+                  label={`Ask ${targetName || typedInstitution.trim() || 'your institution'} to verify this`}
+                  description={
+                    canSend
+                      ? 'Shows as Pending until they review it. Turn off to add it as Self-reported.'
+                      : `${typedInstitution.trim() ? `${typedInstitution.trim()} hasn't` : "Your institution hasn't"} joined SkillCred yet, so this will be added as Self-reported. You can ask for verification later.`
+                  }
+                />
+              </div>
+            </>
           )}
 
           {people.length > 0 && (
@@ -452,12 +516,6 @@ export default function AddProjectModal({
                 sent yet.
               </p>
             </div>
-          )}
-
-          {submitError && (
-            <InlineAlert variant="error" title="Couldn't save your project">
-              {submitError}
-            </InlineAlert>
           )}
         </div>
       )}
