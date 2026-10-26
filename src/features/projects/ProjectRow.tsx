@@ -10,6 +10,9 @@ type ProjectRowProps = {
   busy?: boolean
 }
 
+const pillLink =
+  'inline-flex h-8 w-full items-center justify-center rounded-full border border-brand px-4 text-xs font-medium text-brand hover:bg-cream sm:w-auto'
+
 export default function ProjectRow({ project, onRequestVerification, busy = false }: ProjectRowProps) {
   const to = `/app/projects/${project.id}`
   return (
@@ -20,19 +23,27 @@ export default function ProjectRow({ project, onRequestVerification, busy = fals
       <div className="min-w-0 flex-1 basis-48">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-base font-semibold text-ink">
-            <Link to={to} className="hover:underline">{project.title}</Link>
+            <Link
+              to={to}
+              className="underline decoration-ink/30 decoration-1 underline-offset-4 hover:text-brand hover:decoration-brand"
+            >
+              {project.title}
+            </Link>
           </h3>
           <Badge status={project.status} />
         </div>
         <p className="text-sm text-ink-muted">{project.summary}</p>
-        <p className="text-xs text-ink-muted">{project.meta}</p>
+        <p className={`text-xs ${project.status === 'needs-changes' ? 'font-medium text-error' : 'text-ink-muted'}`}>
+          {project.meta}
+        </p>
       </div>
       {project.status === 'draft' ? (
-        <Link
-          to={`${to}?edit=1`}
-          className="inline-flex h-8 w-full items-center justify-center rounded-full border border-brand px-4 text-xs font-medium text-brand hover:bg-cream sm:w-auto"
-        >
+        <Link to={`${to}?edit=1`} className={pillLink}>
           Continue
+        </Link>
+      ) : project.status === 'needs-changes' && project.actions.edit ? (
+        <Link to={`${to}?edit=1`} className={pillLink}>
+          Fix
         </Link>
       ) : project.actions.requestVerification && onRequestVerification ? (
         <Button

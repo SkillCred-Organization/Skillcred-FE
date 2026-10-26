@@ -137,7 +137,7 @@ export default function VerificationOverviewPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/app/projects/${c.projectId}`)}
+                      onClick={() => navigate(`/app/projects/${c.projectId}${c.status === 'needs-changes' ? '?edit=1' : ''}`)}
                     >
                       {c.status === 'needs-changes' ? 'Fix' : 'View'}
                     </Button>
