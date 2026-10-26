@@ -34,7 +34,7 @@ import ProjectDetailPage from "./features/projects/ProjectDetailPage";
 import NotFoundPage from "./components/pages/NotFoundPage";
 import VerificationOverviewPage from "./features/verification/VerificationOverviewPage";
 import SharePage from "./features/share/SharePage";
-import PublicProfilePage from "./features/public/PublicProfilePage";
+import PublicProfilePage from "./features/public/PublicProfilePage";          
 import SkillsPage from "./features/skills/SkillsPage"; 
 import CertificationsPage from "./features/items/CertificationsPage";
 import AchievementsPage from "./features/items/AchievementsPage";
