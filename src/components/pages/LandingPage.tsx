@@ -3,6 +3,7 @@ import Hero from "../Hero";
 import TrustedLogos from "../TrustedLogos";
 import About from "../About";
 import Features from "../Features";
+import Pricing from "../Pricing";
 import InstitutionBanner from "../InstitutionBanner";
 import FAQ from "../FAQ";
 import Footer from "../Footer";
@@ -19,6 +20,7 @@ export default function LandingPage() {
           <TrustedLogos />
           <About />
           <Features />
+          <Pricing />
           <InstitutionBanner />
           <FAQ />
         </main>
