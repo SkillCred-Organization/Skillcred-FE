@@ -61,9 +61,21 @@ export function saveSession({ token, user }: AuthResponse) {
   catch (error) { tokenStore.clear(); throw error }
 }
 
-export function authDestination(user: AuthUser, flow: 'login' | 'signup' = 'login') {
+export function authDestination(user: AuthUser, flow: 'login' | 'signup' = 'login', returnTo?: unknown) {
+  if (user.role === 'admin' && !user.emailVerified) return '/verify-email'
+  // Only resume an internal protected page that belongs to this account's role.
+  // New registrations still follow onboarding instead of resuming a payment.
+  if (flow === 'login' && typeof returnTo === 'string' && returnTo.startsWith('/')
+    && !returnTo.startsWith('//') && !/[\\\s]/.test(returnTo)) {
+    try {
+      const url = new URL(returnTo, 'https://return.invalid')
+      const allowed = user.role === 'admin'
+        ? /^\/admin(?:\/|$)/.test(url.pathname)
+        : /^\/app(?:\/|$)/.test(url.pathname) || ['/billing/success', '/onboarding'].includes(url.pathname)
+      if (url.origin === 'https://return.invalid' && allowed) return url.pathname + url.search + url.hash
+    } catch { /* Fall back to the normal account destination. */ }
+  }
   if (user.role === 'admin') {
-    if (!user.emailVerified) return '/verify-email'
     return '/admin/dashboard'
   }
   if (flow === 'login') return '/app/dashboard'

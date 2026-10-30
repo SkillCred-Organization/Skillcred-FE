@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Folder, Plus, TriangleAlert } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Folder, Plus, TriangleAlert, Star} from 'lucide-react'
 import Button from '../../components/ui/Button'
 import ChoiceChip from '../../components/ui/ChoiceChip'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
 import { useToast } from '../../components/ui/toastContext'
 import { getProjects, requestVerification } from '../../lib/api'
+import { atProjectLimit } from '../../lib/billing'
 import { errorText, needsInstitution } from '../../lib/errors'
 import type { Project, Status } from '../../types'
 import AddProjectModal from './AddProjectModal'
 import ProjectRow from './ProjectRow'
 import { announceProjectAdded } from './projectToast'
 import ChooseInstitutionModal from './ChooseInstitutionModal'
+import LimitBanner from '../billing/LimitBanner'
+import UpgradeModal from '../billing/UpgradeModal'
+import { useBilling } from '../billing/useBilling'
 
 type Filter = 'all' | Status
 
@@ -32,6 +37,15 @@ export default function ProjectsPage() {
   const [adding, setAdding] = useState(false)
   const [requestingId, setRequestingId] = useState<string | null>(null)
   const [choosingFor, setChoosingFor] = useState<string | null>(null)
+  const { billing, reload } = useBilling()
+  const [upgrading, setUpgrading] = useState(false)
+  const limitReached = atProjectLimit(billing)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+
+  function openAdd() {
+    if (limitReached) setUpgrading(true)
+    else setAdding(true)
+  }
 
   useEffect(() => {
     getProjects()
@@ -39,7 +53,7 @@ export default function ProjectsPage() {
       .catch(() => setError(true))
   }, [attempt])
 
-    async function sendRequest(id: string, institutionId?: string) {
+  async function sendRequest(id: string, institutionId?: string) {
     const updated = await requestVerification(id, institutionId)
     setProjects((list) => (list ?? []).map((p) => (p.id === id ? updated : p)))
     toast.success('Sent to your institution for verification.')
@@ -58,7 +72,7 @@ export default function ProjectsPage() {
   }
 
   const addButton = (
-    <Button icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
+    <Button icon={<Plus className="size-4" />} onClick={openAdd}>
       Add project
     </Button>
   )
@@ -72,9 +86,41 @@ export default function ProjectsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-ink">Projects</h1>
           <p className="text-sm text-ink-muted">Work you built, with proof. Verified projects carry the most weight.</p>
+        
+        {billing?.plan === 'premium' && (
+  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-pending-bg px-3 py-1 text-xs text-pending-text">
+    <Star className="size-3" />
+    Premium Plan
+  </span>
+)}
         </div>
         {addButton}
       </header>
+
+     {billing && billing.projects.limit !== null &&
+  (limitReached && !bannerDismissed ? (
+    <LimitBanner billing={billing} onDismiss={() => setBannerDismissed(true)} />
+  ) : (
+    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-pending-text/20 bg-white px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-ink">
+            {billing.projects.used} of {billing.projects.limit} projects used
+          </p>
+          <span className="rounded-full bg-pending-bg px-2 py-0.5 text-xs text-pending-text">Free Plan</span>
+        </div>
+        <div className="mt-2 h-1.5 w-full max-w-[26rem] overflow-hidden rounded-full bg-pending-bg">
+          <div
+            className={`h-full rounded-full ${limitReached ? 'bg-pending-text' : 'bg-accent'}`}
+            style={{ width: `${Math.min(100, (billing.projects.used / billing.projects.limit) * 100)}%` }}
+          />
+        </div>
+      </div>
+      <Link to="/app/billing" className="shrink-0 text-sm font-medium text-brand underline">
+        {limitReached ? 'Get more with Premium' : 'See Premium'}
+      </Link>
+    </div>
+  ))}
 
       {error ? (
         <EmptyState
@@ -143,12 +189,12 @@ export default function ProjectsPage() {
         </>
       )}
 
-        {choosingFor && (
-    <ChooseInstitutionModal
-      onClose={() => setChoosingFor(null)}
-      onSend={(institutionId) => sendRequest(choosingFor, institutionId)}
-    />
-  )}
+      {choosingFor && (
+        <ChooseInstitutionModal
+          onClose={() => setChoosingFor(null)}
+          onSend={(institutionId) => sendRequest(choosingFor, institutionId)}
+        />
+      )}
 
       {adding && (
         <AddProjectModal
@@ -156,9 +202,16 @@ export default function ProjectsPage() {
           onCreated={(project) => {
             setProjects((list) => [project, ...(list ?? [])])
             announceProjectAdded(toast, project)
+            reload()
+          }}
+          onLimitReached={() => {
+            setUpgrading(true)
+            reload()
           }}
         />
       )}
+
+      {upgrading && <UpgradeModal billing={billing} onClose={() => setUpgrading(false)} />}
     </div>
   )
 }

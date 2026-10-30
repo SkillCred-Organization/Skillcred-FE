@@ -10,10 +10,20 @@ import Select from "../../components/ui/Select";
 import Stepper from "../../components/ui/Stepper";
 import Textarea from "../../components/ui/Textarea";
 import Toggle from "../../components/ui/Toggle";
-import { addProject, deleteProject, getProfile, updateProject, addSkillsToProfile } from "../../lib/api";
+import {
+  addProject,
+  deleteProject,
+  getProfile,
+  updateProject,
+  addSkillsToProfile,
+} from "../../lib/api";
 import { errorText } from "../../lib/errors";
 import { projectTracks } from "../../lib/options";
-import { detailFields, skillSuggestionsFor, skillsKeyFor} from "../../lib/projectFields";
+import {
+  detailFields,
+  skillSuggestionsFor,
+  skillsKeyFor,
+} from "../../lib/projectFields";
 import type { DetailKey } from "../../lib/projectFields";
 import type {
   Institution,
@@ -25,7 +35,7 @@ import type {
 import InstitutionPicker from "../onboarding/InstitutionPicker";
 import { isHttpsUrl, LINK_MESSAGE } from "../../lib/validators";
 import SkillTagInput from "../../components/ui/SkillTagInput";
-
+import { isPlanLimit } from "../../lib/billing";
 
 type FormValues = {
   title: string;
@@ -59,12 +69,14 @@ type AddProjectModalProps = {
   onClose: () => void;
   onCreated: (project: Project) => void;
   project?: ProjectDetail; // when given, the modal edits this project instead of adding a new one
+  onLimitReached?: () => void; // called when the user tries to save a new project but is at their plan limit
 };
 
 export default function AddProjectModal({
   onClose,
   onCreated,
   project,
+  onLimitReached,
 }: AddProjectModalProps) {
   const editing = Boolean(project);
   const isDraftEdit = project?.status === "draft";
@@ -84,8 +96,7 @@ export default function AddProjectModal({
     canPublish ? null : true,
   );
   const [chosen, setChosen] = useState<Institution | null>(null);
-const [typedInstitution, setTypedInstitution] = useState('')
-
+  const [typedInstitution, setTypedInstitution] = useState("");
 
   useEffect(() => {
     if (!canPublish) return;
@@ -108,7 +119,7 @@ const [typedInstitution, setTypedInstitution] = useState('')
     getValues,
     control,
     formState: { errors },
-    setValue
+    setValue,
   } = useForm<FormValues>({
     mode: "onTouched",
     defaultValues: project
@@ -131,19 +142,23 @@ const [typedInstitution, setTypedInstitution] = useState('')
   const overLimit = remaining < 0;
   const trackFields = detailFields[track ?? ""] ?? [];
 
-    const skillsKey = skillsKeyFor(track ?? '')
-  const skillsName = skillsKey ? (`details.${skillsKey}` as const) : null
-  const skillsText = useWatch({ control, name: skillsName ?? 'details.techStack' })
+  const skillsKey = skillsKeyFor(track ?? "");
+  const skillsName = skillsKey ? (`details.${skillsKey}` as const) : null;
+  const skillsText = useWatch({
+    control,
+    name: skillsName ?? "details.techStack",
+  });
   const skills = skillsName
-    ? (skillsText ?? '')
-        .split(',')
+    ? (skillsText ?? "")
+        .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
-    : []
-  const moreFields = trackFields.filter((f) => f.key !== skillsKey)
+    : [];
+  const moreFields = trackFields.filter((f) => f.key !== skillsKey);
 
   function setSkills(next: string[]) {
-    if (skillsName) setValue(skillsName, next.join(', '), { shouldDirty: true })
+    if (skillsName)
+      setValue(skillsName, next.join(", "), { shouldDirty: true });
   }
 
   const people = hasTeam ? teammates : [];
@@ -169,38 +184,62 @@ const [typedInstitution, setTypedInstitution] = useState('')
     setMate({ name: "", email: "", role: "" });
   }
 
-  async function submit(status: NewProject['status']) {
-    setSaving(true)
-    setSubmitError('')
+  async function submit(status: NewProject["status"]) {
+    setSaving(true);
+    setSubmitError("");
     try {
-      const fields = { ...getValues(), teammates: people }
-      let saved: Project
-      if (project && (!isDraftEdit || status === 'draft')) {
-        saved = await updateProject(project.id, fields) // plain save, status unchanged
-      } else {
-        // A new project, or a finished draft. A draft becomes a project by creating it properly
-        // and removing the draft, because only these calls are documented by the backend.
-        saved = await addProject({
+      const fields = { ...getValues(), teammates: people };
+      const create = () =>
+        addProject({
           ...fields,
           status,
-          institutionId: status === 'pending' ? chosen?.id ?? undefined : undefined,
-        })
-        if (project) {
+          institutionId:
+            status === "pending" ? (chosen?.id ?? undefined) : undefined,
+        });
+
+      let saved: Project;
+      if (project && (!isDraftEdit || status === "draft")) {
+        saved = await updateProject(project.id, fields); // plain save, status unchanged
+      } else if (!project) {
+        saved = await create();
+      } else {
+        // Finishing a draft: create the project, then remove the draft.
+        let draftRemoved = false;
+        try {
+          saved = await create();
+        } catch (err) {
+          if (!isPlanLimit(err)) throw err;
+          // The draft itself uses one of the free slots, so swap it instead of adding to it
+          await deleteProject(project.id);
+          draftRemoved = true;
           try {
-            await deleteProject(project.id)
-          } catch {
-             // the project exists now; a leftover draft can be deleted by hand
+            saved = await create();
+          } catch (second) {
+            await addProject({ ...fields, status: "draft" }).catch(() => {}); // put the draft back
+            throw second;
           }
         }
+        if (!draftRemoved) await deleteProject(project.id).catch(() => {});
       }
 
-            if (status !== 'draft' && skills.length > 0) addSkillsToProfile(skills).catch(() => {})
+if (status !== "draft" && skills.length > 0)
+        addSkillsToProfile(skills).catch(() => {});
 
-      onCreated(saved)
-      onClose()
+      onCreated(saved);
+      onClose();
     } catch (err) {
-      setSaving(false)
-      setSubmitError(errorText(err, "Couldn't save your project. Check your connection and try again."))
+      setSaving(false);
+      if (isPlanLimit(err) && onLimitReached) {
+        onLimitReached(); // nothing was saved; show the upgrade prompt
+        onClose();
+        return;
+      }
+      setSubmitError(
+        errorText(
+          err,
+          "Couldn't save your project. Check your connection and try again.",
+        ),
+      );
     }
   }
 
@@ -351,15 +390,15 @@ const [typedInstitution, setTypedInstitution] = useState('')
             })}
           />
 
-            {skillsKey && (
-    <SkillTagInput
-      label="Skills used in this project"
-      value={skills}
-      onChange={setSkills}
-      suggestions={skillSuggestionsFor(track ?? '')}
-      helperText="They become Verified on your profile once your institution verifies this project."
-    />
-  )}
+          {skillsKey && (
+            <SkillTagInput
+              label="Skills used in this project"
+              value={skills}
+              onChange={setSkills}
+              suggestions={skillSuggestionsFor(track ?? "")}
+              helperText="They become Verified on your profile once your institution verifies this project."
+            />
+          )}
 
           {moreFields.length > 0 && (
             <details
@@ -505,7 +544,10 @@ const [typedInstitution, setTypedInstitution] = useState('')
           </dl>
 
           {!canPublish ? (
-              <InlineAlert variant="info" title="Saving doesn't send this for verification">
+            <InlineAlert
+              variant="info"
+              title="Saving doesn't send this for verification"
+            >
               Use Request verification on the project page when you are ready.
             </InlineAlert>
           ) : institutionLinked === null ? (
@@ -528,10 +570,10 @@ const [typedInstitution, setTypedInstitution] = useState('')
                   checked={sendsForVerification}
                   onChange={setAskVerification}
                   disabled={!canSend}
-                  label={`Ask ${targetName || typedInstitution.trim() || 'your institution'} to verify this`}
+                  label={`Ask ${targetName || typedInstitution.trim() || "your institution"} to verify this`}
                   description={
                     canSend
-                      ? 'Shows as Pending until they review it. Turn off to add it as Self-reported.'
+                      ? "Shows as Pending until they review it. Turn off to add it as Self-reported."
                       : `${typedInstitution.trim() ? `${typedInstitution.trim()} hasn't` : "Your institution hasn't"} joined SkillCred yet, so this will be added as Self-reported. You can ask for verification later.`
                   }
                 />

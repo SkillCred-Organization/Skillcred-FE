@@ -17,3 +17,11 @@ export function formatMonth(iso?: string) {
   const date = new Date(iso)
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 }
+
+export function formatDate(iso?: string) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
