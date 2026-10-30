@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Award,
   Bell,
@@ -27,6 +27,10 @@ import AddProjectModal from '../projects/AddProjectModal'
 import { announceProjectAdded } from '../projects/projectToast'
 import ProfileLinkCard from './ProfileLinkCard'
 import VerificationBanner from './VerificationBanner'
+import { atProjectLimit } from '../../lib/billing'
+import type { BillingMe } from '../../lib/billing'
+import UpgradeModal from '../billing/UpgradeModal'
+import { useBilling } from '../billing/useBilling'
 
 const activityStyle: Record<Activity['kind'], { icon: LucideIcon; style: string }> = {
   verified: { icon: ShieldCheck, style: 'bg-verified-bg text-verified-text' },
@@ -94,9 +98,9 @@ function FirstTimeCard({ onAdd }: { onAdd: () => void }) {
   )
 }
 
-type ContentProps = { data: Dashboard; institution: string; onAdd: () => void }
+type ContentProps = { data: Dashboard; institution: string; onAdd: () => void; billing: BillingMe | null }
 
-function DashboardContent({ data, institution, onAdd }: ContentProps) {
+function DashboardContent({ data, institution, onAdd, billing }: ContentProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const isEmpty =
@@ -105,7 +109,7 @@ function DashboardContent({ data, institution, onAdd }: ContentProps) {
 
   return (
     <>
-         {isEmpty ? (
+      {isEmpty ? (
         data.drafts > 0 ? (
           <InlineAlert
             variant="info"
@@ -143,6 +147,29 @@ function DashboardContent({ data, institution, onAdd }: ContentProps) {
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
+
+      {billing && billing.plan !== 'premium' && (
+        <section className="flex flex-col gap-4 rounded-xl border border-line bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-pending-bg text-pending-text">
+              <Star className="size-5" />
+            </span>
+            <div>
+              <span className="rounded-full bg-pending-bg px-2 py-0.5 text-xs text-pending-text">Premium</span>
+              <h2 className="mt-1 text-base font-semibold text-ink">Showcase more of your work</h2>
+              <p className="text-sm text-ink-muted">
+                Add more than 2 projects to your profile for ₦2,499 a month. Verification works the same on every plan.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/app/billing"
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-brand px-5 text-sm font-medium text-brand hover:bg-cream"
+          >
+            Explore Premium
+          </Link>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
         <section className="rounded-xl border border-line bg-white p-4">
@@ -187,6 +214,14 @@ export default function DashboardPage() {
   const [institution, setInstitution] = useState('your institution')
   const [error, setError] = useState(false)
   const [attempt, setAttempt] = useState(0)
+  const { billing, reload } = useBilling()
+  const [upgrading, setUpgrading] = useState(false)
+  const limitReached = atProjectLimit(billing)
+
+  function openAdd() {
+    if (limitReached) setUpgrading(true)
+    else setAdding(true)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -218,6 +253,14 @@ export default function DashboardPage() {
             {greeting()}, {firstName}
           </h1>
           <p className="text-sm text-ink-muted">Here&apos;s where your profile stands.</p>
+          {billing?.plan === 'premium' && (
+            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-pending-bg px-3 py-1 text-xs text-pending-text">
+              <Star className="size-3" />
+              Premium Plan
+              {billing.paidThrough &&
+                ` · ${billing.cancelAtPeriodEnd ? 'ends' : 'renews'} ${new Date(billing.paidThrough).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -228,7 +271,7 @@ export default function DashboardPage() {
             <Bell className="size-4" />
             <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-error" />
           </button>
-          <Button icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
+          <Button icon={<Plus className="size-4" />} onClick={openAdd}>
             Add
           </Button>
         </div>
@@ -255,17 +298,17 @@ export default function DashboardPage() {
       ) : dashboard === null ? (
         <DashboardSkeleton />
       ) : (
-        <DashboardContent data={dashboard} institution={institution} onAdd={() => setAdding(true)} />
+        <DashboardContent data={dashboard} institution={institution} onAdd={openAdd} billing={billing} />
       )}
 
-        <button
-    type="button"
-    aria-label="Add project"
-    onClick={() => setAdding(true)}
-    className="fixed bottom-20 right-4 z-10 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg hover:bg-brand-dark md:hidden"
-  >
-    <Plus className="size-6" />
-  </button>
+      <button
+        type="button"
+        aria-label="Add project"
+        onClick={openAdd}
+        className="fixed bottom-20 right-4 z-10 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg hover:bg-brand-dark md:hidden"
+      >
+        <Plus className="size-6" />
+      </button>
 
       {adding && (
         <AddProjectModal
@@ -274,8 +317,14 @@ export default function DashboardPage() {
             announceProjectAdded(toast, project)
             navigate('/app/projects')
           }}
+          onLimitReached={() => {
+            setUpgrading(true)
+            reload()
+          }}
         />
       )}
+
+      {upgrading && <UpgradeModal billing={billing} onClose={() => setUpgrading(false)} />}
     </div>
   )
 }
