@@ -77,8 +77,10 @@ export default function App() {
           <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Route>
-      <Route element={<RequireAuth role="learner" />}>
+      <Route element={<RequireAuth role="learner" verified />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
+      </Route>
+      <Route element={<RequireAuth role="learner" />}>
         <Route path="/billing/success" element={<AuthPageLayout><BillingSuccessPage /></AuthPageLayout>} />
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />

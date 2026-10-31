@@ -133,9 +133,10 @@ test('API origins normalize /api once and forbid arbitrary destinations', () => 
   assert.equal(apiUrl('/api/auth/me', 'https://api.example.test/api/'), 'https://api.example.test/api/auth/me')
   assert.throws(() => apiUrl('https://evil.test/collect'))
 })
-test('new learners go to onboarding; successful logins go to the dashboard', () => {
+test('new learners verify their email, then onboard; successful logins go to the dashboard', () => {
   assert.equal(authDestination(session.user, 'signup'), '/onboarding')
-  assert.equal(authDestination({ ...session.user, emailVerified: false }, 'signup'), '/onboarding')
+  assert.equal(authDestination({ ...session.user, emailVerified: false }, 'signup'), '/verify-email')
+  assert.equal(authDestination({ ...session.user, emailVerified: false }), '/app/dashboard') // can log in; pages ask them to verify
   assert.equal(authDestination(session.user), '/app/dashboard')
   assert.equal(authDestination({ ...session.user, role: 'admin', emailVerified: false }), '/verify-email')
   assert.equal(authDestination({ ...session.user, role: 'admin', needsInstitution: true }), '/admin/dashboard')
