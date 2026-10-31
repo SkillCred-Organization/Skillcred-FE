@@ -63,6 +63,7 @@ export function saveSession({ token, user }: AuthResponse) {
 
 export function authDestination(user: AuthUser, flow: 'login' | 'signup' = 'login', returnTo?: unknown) {
   if (user.role === 'admin' && !user.emailVerified) return '/verify-email'
+  if (flow === 'signup' && !user.emailVerified) return '/verify-email' // learners can still log in and look around
   // Only resume an internal protected page that belongs to this account's role.
   // New registrations still follow onboarding instead of resuming a payment.
   if (flow === 'login' && typeof returnTo === 'string' && returnTo.startsWith('/')
