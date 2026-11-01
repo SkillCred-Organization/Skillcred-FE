@@ -5,7 +5,7 @@ import { useToast } from '../../components/ui/toastContext'
 import { getNotificationSettings, updateNotificationSettings } from '../../lib/notifications'
 import { ErrorNotice, Panel } from '../admin/AdminUI'
 
-export default function EmailNotificationSettings({ email }: { email?: string }) {
+export default function EmailNotificationsSettings({ email }: { email?: string }) {
   const toast = useToast()
   const [verification, setVerification] = useState<boolean | null>(null)
   const [loadError, setLoadError] = useState('')

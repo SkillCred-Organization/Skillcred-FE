@@ -38,6 +38,7 @@ import CertificationsPage from "./features/items/CertificationsPage";
 import AchievementsPage from "./features/items/AchievementsPage";
 import PlanPage from "./features/billing/PlanPage";
 import BillingSuccessPage from "./features/billing/BillingSuccessPage";
+import NotificationsPage from "./features/notifications/NotificationsPage";
 import AuthPageLayout from "./components/pages/AuthPageLayout";
 
 export default function App() {
