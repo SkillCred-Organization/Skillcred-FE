@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LockKeyhole, Mail, MapPin, Upload, UserRound } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -8,6 +8,7 @@ import { useToast } from "../../components/ui/toastContext";
 import { useAuth } from "../auth/authContext";
 import { settingsApi, type AccountProfile } from "../../lib/settings";
 import { trackEvent } from "../../lib/analytics";
+import { uploadAvatar } from "../../lib/avatar";
 import { useResource } from "../../hooks/useResource";
 import {
   ErrorNotice,
@@ -21,11 +22,21 @@ import { DataExport, PasswordSettings } from "./SettingsSections";
 import EmailNotificationSettings from "./EmailNotificationsSetting";
 import "../../workspace.css";
 
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const PHOTO_MAX_MB = 3;
+
 function AccountForm({ profile }: { profile: AccountProfile | null }) {
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const toast = useToast();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
+    profile?.avatarUrl ?? undefined,
+  );
+
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -47,17 +58,75 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
       setBusy(false);
     }
   }
+
+  async function onPhotoChosen(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // lets them choose the same file again later
+    if (!file) return;
+    setPhotoError("");
+    if (!PHOTO_TYPES.includes(file.type)) {
+      setPhotoError("Choose a JPG, PNG or WebP image.");
+      return;
+    }
+    if (file.size > PHOTO_MAX_MB * 1024 * 1024) {
+      setPhotoError(
+        `That image is too large. Choose one under ${PHOTO_MAX_MB} MB.`,
+      );
+      return;
+    }
+    setUploading(true);
+    try {
+      const result = await uploadAvatar(file);
+      setAvatarUrl(result.avatarUrl);
+      toast.success("Profile photo updated.");
+    } catch (e) {
+      setPhotoError(
+        e instanceof Error
+          ? e.message
+          : "Couldn't upload your photo. Please try again.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <Panel>
       <form onSubmit={save} className="workspace-form">
         <ErrorNotice message={error} />
         <div className="photo-control">
-          <PersonAvatar name={user?.fullName} large />
-          <Button variant="outline" icon={<Upload size={16} />} disabled>
-            Change photo
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Your profile photo"
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <PersonAvatar name={user?.fullName} large />
+          )}
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            onChange={onPhotoChosen}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            icon={<Upload size={16} />}
+            loading={uploading}
+            onClick={() => fileInput.current?.click()}
+          >
+              {avatarUrl ? "Change photo" : "Upload photo"}
           </Button>
         </div>
-        <Unavailable>Photo uploads are not available yet.</Unavailable>
+        <ErrorNotice message={photoError} />
         <div className="workspace-form-columns">
           <Input
             label="Full name"
