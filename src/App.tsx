@@ -25,9 +25,7 @@ import {
 } from "./features/admin/ReviewPages";
 import LearnersPage from "./features/admin/LearnersPage";
 import InstitutionPage from "./features/admin/InstitutionPage";
-import AdminSettings, {
-  AdminNotifications,
-} from "./features/admin/AdminSettings";
+import AdminSettings from "./features/admin/AdminSettings"
 import SettingsPage from "./features/settings/SettingsPage";
 import TeammateConfirmationPage from "./components/pages/TeammateConfirmationPage";
 import ProjectDetailPage from "./features/projects/ProjectDetailPage";
@@ -73,7 +71,7 @@ export default function App() {
           <Route path="learners" element={<LearnersPage />} />
           <Route path="institution" element={<InstitutionPage />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="notifications" element={<AdminNotifications />} />
+         <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Route>
@@ -93,6 +91,7 @@ export default function App() {
           <Route path="verification" element={<VerificationOverviewPage />} />
           <Route path="share" element={<SharePage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="billing" element={<PlanPage />} />
         </Route>

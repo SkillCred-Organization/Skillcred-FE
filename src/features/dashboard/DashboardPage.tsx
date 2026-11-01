@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Award,
-  Bell,
   Folder,
   GraduationCap,
   Info,
@@ -31,6 +30,8 @@ import { atProjectLimit } from '../../lib/billing'
 import type { BillingMe } from '../../lib/billing'
 import UpgradeModal from '../billing/UpgradeModal'
 import { useBilling } from '../billing/useBilling'
+import NotificationBell from '../notifications/NotificationBell'
+
 
 const activityStyle: Record<Activity['kind'], { icon: LucideIcon; style: string }> = {
   verified: { icon: ShieldCheck, style: 'bg-verified-bg text-verified-text' },
@@ -263,14 +264,7 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative flex size-10 items-center justify-center rounded-full border border-line bg-white text-ink-muted hover:bg-cream"
-          >
-            <Bell className="size-4" />
-            <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-error" />
-          </button>
+          <NotificationBell/>
           <Button icon={<Plus className="size-4" />} onClick={openAdd}>
             Add
           </Button>
