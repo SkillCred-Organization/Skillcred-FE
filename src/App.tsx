@@ -38,8 +38,7 @@ import CertificationsPage from "./features/items/CertificationsPage";
 import AchievementsPage from "./features/items/AchievementsPage";
 import PlanPage from "./features/billing/PlanPage";
 import BillingSuccessPage from "./features/billing/BillingSuccessPage";
-import NotificationsPage from "./features/notifications/NotificationsPage"
-
+import AuthPageLayout from "./components/pages/AuthPageLayout";
 
 export default function App() {
   return (
@@ -76,12 +75,12 @@ export default function App() {
           <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Route>
-<Route element={<RequireAuth role="learner" />}>
-  <Route path="/onboarding" element={<OnboardingPage />} />
-  <Route element={<AppLayout />}>
-    <Route path="/billing/success" element={<BillingSuccessPage />} />
-  </Route>
-  <Route path="/app" element={<AppLayout />}>
+      <Route element={<RequireAuth role="learner" verified />}>
+        <Route path="/onboarding" element={<OnboardingPage />} />
+      </Route>
+      <Route element={<RequireAuth role="learner" />}>
+        <Route path="/billing/success" element={<AuthPageLayout><BillingSuccessPage /></AuthPageLayout>} />
+        <Route path="/app" element={<AppLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="projects" element={<ProjectsPage />} />

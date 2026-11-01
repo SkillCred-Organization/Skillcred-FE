@@ -12,7 +12,7 @@ export default function VerificationPage() {
   const [params] = useSearchParams()
   const token = params.get('token') || ''
   const location = useLocation()
-  const state = location.state as { email?: string; institutionName?: string } | null
+  const state = location.state as { email?: string; institutionName?: string; resendAvailableAt?: number } | null
   const navigate = useNavigate()
   const { user, loading, error: accountError, refresh } = useAuth()
   const email = state?.email || user?.email
@@ -20,7 +20,7 @@ export default function VerificationPage() {
   const outcome = result?.token === token ? result.outcome : 'pending'
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
-  const { remaining, restart } = useResendCountdown()
+  const { remaining, restart } = useResendCountdown(state?.resendAvailableAt)
   const request = useRef<{ token: string; promise: ReturnType<typeof authApi.verifyEmail> } | null>(null)
   useEffect(() => {
     if (!token) return

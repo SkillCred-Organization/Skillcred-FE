@@ -20,6 +20,25 @@ beforeEach(() => { storage.clear(); requests = []; window.location = { origin: '
 afterEach(() => { globalThis.fetch = originalFetch })
 const session = { token: 'test-session', user: { id: 'test-user', role: 'learner', fullName: 'Test Learner', email: 'learner@example.test', emailVerified: true } }
 
+test('login resumes a payment reference or protected page for the correct role', () => {
+  const payment = '/billing/success?reference=test%2Fpayment%26receipt&trxref=paystack-test'
+  assert.equal(authDestination(session.user, 'login', payment), payment)
+  assert.equal(authDestination(session.user, 'login', '/app/projects?status=draft'), '/app/projects?status=draft')
+  const admin = { ...session.user, role: 'admin' }
+  assert.equal(authDestination(admin, 'login', '/admin/queue?status=pending'), '/admin/queue?status=pending')
+  assert.equal(authDestination(admin, 'login', payment), '/admin/dashboard')
+  assert.equal(authDestination(session.user, 'login', '/admin/dashboard'), '/app/dashboard')
+  assert.equal(authDestination({ ...admin, emailVerified: false }, 'login', '/admin/queue'), '/verify-email')
+  assert.equal(authDestination(session.user, 'signup', payment), '/onboarding')
+})
+
+test('login rejects external, malformed and looping return destinations', () => {
+  for (const target of [undefined, {}, 'https://example.test', '//example.test', '/\\example.test',
+    '/\n/example.test', '/app/../../login', '/login', '/signup', 'app/projects', '/billing/successful']) {
+    assert.equal(authDestination(session.user, 'login', target), '/app/dashboard')
+  }
+})
+
 test('login uses the documented endpoint and password payload; session uses auth_token', async () => {
   respond(session)
   const result = await authApi.login({ email: 'learner@example.test', password: 'TestPass123' })
@@ -114,9 +133,10 @@ test('API origins normalize /api once and forbid arbitrary destinations', () => 
   assert.equal(apiUrl('/api/auth/me', 'https://api.example.test/api/'), 'https://api.example.test/api/auth/me')
   assert.throws(() => apiUrl('https://evil.test/collect'))
 })
-test('new learners go to onboarding; successful logins go to the dashboard', () => {
+test('new learners verify their email, then onboard; successful logins go to the dashboard', () => {
   assert.equal(authDestination(session.user, 'signup'), '/onboarding')
-  assert.equal(authDestination({ ...session.user, emailVerified: false }, 'signup'), '/onboarding')
+  assert.equal(authDestination({ ...session.user, emailVerified: false }, 'signup'), '/verify-email')
+  assert.equal(authDestination({ ...session.user, emailVerified: false }), '/app/dashboard') // can log in; pages ask them to verify
   assert.equal(authDestination(session.user), '/app/dashboard')
   assert.equal(authDestination({ ...session.user, role: 'admin', emailVerified: false }), '/verify-email')
   assert.equal(authDestination({ ...session.user, role: 'admin', needsInstitution: true }), '/admin/dashboard')

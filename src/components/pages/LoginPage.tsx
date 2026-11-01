@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LockKeyhole, Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import AuthPageLayout from './AuthPageLayout'
@@ -23,8 +23,9 @@ export default function LoginPage() {
   const [setupBusy, setSetupBusy] = useState(false)
   const { acceptSession } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   function success(response: AuthResponse, flow: 'login' | 'signup' = 'login', method: 'password' | 'google' = 'password') {
-    navigate(authDestination(acceptSession(response), flow), { replace: true })
+    navigate(authDestination(acceptSession(response), flow, location.state?.from), { replace: true })
     trackEvent(flow === 'signup' ? 'sign_up' : 'login', { method, account_type: response.user.role })
   }
   function failure(error: unknown, method: 'password' | 'google' = 'password') {

@@ -10,7 +10,7 @@ export function useOnboardingGate() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const userId = user?.id ?? ''
-  const needsCheck = user?.role === 'learner' && !!userId && !localStorage.getItem(onboardingKey(userId))
+  const needsCheck = user?.role === 'learner' && user.emailVerified && !!userId && !localStorage.getItem(onboardingKey(userId))
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {

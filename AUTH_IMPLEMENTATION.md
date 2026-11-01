@@ -27,7 +27,8 @@ All HTTP calls go through `src/lib/apiClient.ts`. The shared client was imported
 - The verification endpoint returns a confirmation, not an access token. A browser without a valid saved session shows verification success and a login link; the email verification token must never be saved as `auth_token`.
 - `/account-status`: pending institution review or missing institution setup.
 - Successful learner signup (email or Google): `/onboarding`.
-- Successful login (email or Google): `/app/dashboard` for learners; verified admins go to `/admin/dashboard`, and unverified admins go to `/verify-email`.
+- Successful login (email or Google) resumes a saved, internal `state.from` route for the account's role, preserving its query string (including a Paystack payment reference). Without a valid return route, learners go to `/app/dashboard` and verified admins to `/admin/dashboard`; unverified admins still go to `/verify-email`, and new registrations keep their onboarding flow.
+- `/billing/success` requires a learner session but renders outside the dashboard layout. The page always verifies the payment reference with the backend before reporting success.
 - First-time Google account completion follows the signup route; institution signup retains its verification/setup flow.
 
 ## Backend contract
