@@ -65,6 +65,7 @@ export async function apiClient<T>(endpoint: string, { auth = true, timeoutMs = 
     if (response.status === 401 && token && tokenStore.get() === token) {
       tokenStore.clear()
       window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+      
     }
     throw new ApiError(response.status, data?.message || 'Something went wrong. Please try again.', data?.code, data?.errors)
   }
