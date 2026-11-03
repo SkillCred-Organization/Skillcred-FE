@@ -40,6 +40,8 @@ import PlanPage from "./features/billing/PlanPage";
 import BillingSuccessPage from "./features/billing/BillingSuccessPage";
 import NotificationsPage from "./features/notifications/NotificationsPage";
 import AuthPageLayout from "./components/pages/AuthPageLayout";
+import AccountDeletedPage from "./components/pages/AccountDeletedPage";
+
 
 export default function App() {
   return (
@@ -56,6 +58,7 @@ export default function App() {
       <Route path="/password-updated" element={<PasswordUpdatedPage />} />
       <Route path="/verify-email" element={<VerificationPage />} />
       <Route path="/account-status" element={<AccountStatusPage />} />
+      <Route path="/account-deleted" element={<AccountDeletedPage />} />
       <Route path="/terms" element={<LegalPage />} />
       <Route path="/privacy" element={<LegalPage privacy />} />
       <Route path="/confirm-teammate" element={<TeammateConfirmationPage />} />
