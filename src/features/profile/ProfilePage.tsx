@@ -18,7 +18,7 @@ const profileItems: Item[] = [
 
 const accountItems: Item[] = [
   { to: '/app/settings', label: 'Settings', icon: SlidersHorizontal },
-  { to: '/app/settings', label: 'Notifications', icon: Bell },
+  { to: '/app/notifications', label: 'Notifications', icon: Bell },
 ]
 
 function Group({ title, items }: { title: string; items: Item[] }) {

@@ -25,9 +25,7 @@ import {
 } from "./features/admin/ReviewPages";
 import LearnersPage from "./features/admin/LearnersPage";
 import InstitutionPage from "./features/admin/InstitutionPage";
-import AdminSettings, {
-  AdminNotifications,
-} from "./features/admin/AdminSettings";
+import AdminSettings from "./features/admin/AdminSettings"
 import SettingsPage from "./features/settings/SettingsPage";
 import TeammateConfirmationPage from "./components/pages/TeammateConfirmationPage";
 import ProjectDetailPage from "./features/projects/ProjectDetailPage";
@@ -40,7 +38,10 @@ import CertificationsPage from "./features/items/CertificationsPage";
 import AchievementsPage from "./features/items/AchievementsPage";
 import PlanPage from "./features/billing/PlanPage";
 import BillingSuccessPage from "./features/billing/BillingSuccessPage";
+import NotificationsPage from "./features/notifications/NotificationsPage";
 import AuthPageLayout from "./components/pages/AuthPageLayout";
+import AccountDeletedPage from "./components/pages/AccountDeletedPage";
+
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
       <Route path="/password-updated" element={<PasswordUpdatedPage />} />
       <Route path="/verify-email" element={<VerificationPage />} />
       <Route path="/account-status" element={<AccountStatusPage />} />
+      <Route path="/account-deleted" element={<AccountDeletedPage />} />
       <Route path="/terms" element={<LegalPage />} />
       <Route path="/privacy" element={<LegalPage privacy />} />
       <Route path="/confirm-teammate" element={<TeammateConfirmationPage />} />
@@ -73,7 +75,7 @@ export default function App() {
           <Route path="learners" element={<LearnersPage />} />
           <Route path="institution" element={<InstitutionPage />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="notifications" element={<AdminNotifications />} />
+         <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Route>
@@ -93,6 +95,7 @@ export default function App() {
           <Route path="verification" element={<VerificationOverviewPage />} />
           <Route path="share" element={<SharePage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="billing" element={<PlanPage />} />
         </Route>
