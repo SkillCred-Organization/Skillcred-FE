@@ -21,6 +21,7 @@ import {
 import { DataExport, PasswordSettings } from "./SettingsSections";
 import EmailNotificationSettings from "./EmailNotificationsSetting";
 import "../../workspace.css";
+import DeleteAccountModal from "./DeleteAccountModal";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_MAX_MB = 3;
@@ -170,6 +171,7 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
 function AccountSettings() {
   const resource = useResource(settingsApi.profile);
   const [logout, setLogout] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   return (
     <>
       <ResourceState {...resource} retry={resource.reload} />
@@ -178,12 +180,8 @@ function AccountSettings() {
         <div>
           <h2>Delete account</h2>
           <p>Removes your profile and all claims for good.</p>
-          <Unavailable>
-            Account deletion is not available here yet. Contact support for
-            help.
-          </Unavailable>
         </div>
-        <Button variant="outline" disabled>
+        <Button variant="outline" onClick={() => setDeleting(true)}>
           Delete account
         </Button>
       </Panel>
@@ -194,9 +192,11 @@ function AccountSettings() {
         Log out
       </button>
       {logout && <LogoutModal onClose={() => setLogout(false)} />}
+      {deleting && <DeleteAccountModal onClose={() => setDeleting(false)} />}
     </>
   );
 }
+
 
 export default function SettingsPage() {
   const [params, setParams] = useSearchParams();
