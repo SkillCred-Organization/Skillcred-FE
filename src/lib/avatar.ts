@@ -17,3 +17,7 @@ export function uploadAvatar(file: File) {
     timeoutMs: 60000,
   })
 }
+
+export function removeAvatar() {
+  return apiClient<unknown>('/api/learner/avatar', { method: 'DELETE', timeoutMs: 60000 })
+}
