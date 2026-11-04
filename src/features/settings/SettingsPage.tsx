@@ -8,7 +8,7 @@ import { useToast } from "../../components/ui/toastContext";
 import { useAuth } from "../auth/authContext";
 import { settingsApi, type AccountProfile } from "../../lib/settings";
 import { trackEvent } from "../../lib/analytics";
-import { uploadAvatar } from "../../lib/avatar";
+import { removeAvatar, uploadAvatar } from "../../lib/avatar";
 import { useResource } from "../../hooks/useResource";
 import {
   ErrorNotice,
@@ -26,13 +26,20 @@ import DeleteAccountModal from "./DeleteAccountModal";
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_MAX_MB = 3;
 
-function AccountForm({ profile }: { profile: AccountProfile | null }) {
+function AccountForm({
+  profile,
+  onPhotoChanged,
+}: {
+  profile: AccountProfile | null;
+  onPhotoChanged: () => void;
+}) {
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const toast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
     profile?.avatarUrl ?? undefined,
@@ -80,6 +87,7 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
       const result = await uploadAvatar(file);
       setAvatarUrl(result.avatarUrl);
       toast.success("Profile photo updated.");
+      onPhotoChanged?.();
     } catch (e) {
       setPhotoError(
         e instanceof Error
@@ -88,6 +96,26 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
       );
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function onRemovePhoto() {
+    if (!window.confirm("Remove your profile photo?")) return;
+    setPhotoError("");
+    setRemoving(true);
+    try {
+      await removeAvatar();
+      setAvatarUrl(undefined);
+      toast.success("Profile photo removed.");
+      onPhotoChanged?.();
+    } catch (e) {
+      setPhotoError(
+        e instanceof Error
+          ? e.message
+          : "Couldn't remove your photo. Please try again.",
+      );
+    } finally {
+      setRemoving(false);
     }
   }
 
@@ -100,9 +128,16 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
             <img
               src={avatarUrl}
               alt="Your profile photo"
+              width={72}
+              height={72}
+              referrerPolicy="no-referrer"
+              onError={() => setPhotoError("The photo couldn't be displayed.")}
               style={{
                 width: 72,
                 height: 72,
+                minWidth: 72,
+                flexShrink: 0,
+                display: "block",
                 borderRadius: "50%",
                 objectFit: "cover",
               }}
@@ -122,10 +157,22 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
             variant="outline"
             icon={<Upload size={16} />}
             loading={uploading}
+            disabled={removing}
             onClick={() => fileInput.current?.click()}
           >
-              {avatarUrl ? "Change photo" : "Upload photo"}
+            {avatarUrl ? "Change photo" : "Upload photo"}
           </Button>
+          {avatarUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              loading={removing}
+              disabled={uploading}
+              onClick={onRemovePhoto}
+            >
+              Remove photo
+            </Button>
+          )}
         </div>
         <ErrorNotice message={photoError} />
         <div className="workspace-form-columns">
@@ -175,7 +222,12 @@ function AccountSettings() {
   return (
     <>
       <ResourceState {...resource} retry={resource.reload} />
-      {resource.data && <AccountForm profile={resource.data.profile} />}
+      {resource.data && (
+        <AccountForm
+          profile={resource.data.profile}
+          onPhotoChanged={resource.reload}
+        />
+      )}
       <Panel className="danger-panel">
         <div>
           <h2>Delete account</h2>
@@ -196,7 +248,6 @@ function AccountSettings() {
     </>
   );
 }
-
 
 export default function SettingsPage() {
   const [params, setParams] = useSearchParams();
