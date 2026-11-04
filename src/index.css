@@ -87,5 +87,11 @@
   }
 }
 
+/* iPhones zoom into any field under 16px when it is tapped, and the page stays zoomed and
+   scrolls sideways. Kept outside a layer so it wins over text-sm on the fields. */
+@media (hover: none) and (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+}
+
 /* Hide Edge's native password eye; Input supplies the accessible visibility toggle. */
 input::-ms-reveal, input::-ms-clear { display: none; }
