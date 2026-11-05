@@ -504,6 +504,7 @@ type ApiPublicProfile = {
   achievements?: ApiPublicItem[]
   skills?: (string | { name?: string; verified?: boolean })[]
   stats?: { verified?: number; total?: number }
+  avatarUrl?: string | null
 }
 
 function toPublicItem(p: ApiPublicItem, i: number): PublicItem {
@@ -532,6 +533,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile> {
     headline: p.headline ?? '',
     location: p.location ?? '',
     bio: p.bio ?? '',
+        avatarUrl: p.avatarUrl ?? null,
     email: p.email ?? '',
     institution: typeof inst === 'string' ? inst : [inst?.name, inst?.programme].filter(Boolean).join(' · '),
     projects: (p.projects ?? []).map(toPublicItem),
