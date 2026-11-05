@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Award, Bell, ChevronRight, Code, LogOut, Share2, SlidersHorizontal, Star } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import Avatar from '../../components/ui/Avatar'
+import UserAvatar from '../../components/ui/UserAvatar'
 import LogoutModal from '../../components/layout/LogoutModal'
 import { useDisplayUser } from '../auth/useDisplayUser'
 
@@ -49,7 +49,7 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-semibold text-ink">Profile</h1>
 
       <div className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-white p-4">
-        <Avatar initials={user.initials} size="lg" />
+        <UserAvatar initials={user.initials} size="lg" />
         <div>
           <p className="font-medium text-ink">{user.name}</p>
           <p className="text-sm text-ink-muted">{user.role}</p>

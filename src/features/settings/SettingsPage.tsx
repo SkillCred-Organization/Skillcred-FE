@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LockKeyhole, Mail, MapPin, Upload, UserRound } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -22,18 +22,14 @@ import { DataExport, PasswordSettings } from "./SettingsSections";
 import EmailNotificationSettings from "./EmailNotificationsSetting";
 import "../../workspace.css";
 import DeleteAccountModal from "./DeleteAccountModal";
+import { setAvatar, useAvatarUrl } from "../../lib/avatarStore";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_MAX_MB = 3;
 
-function AccountForm({
-  profile,
-  onPhotoChanged,
-}: {
-  profile: AccountProfile | null;
-  onPhotoChanged: () => void;
-}) {
+function AccountForm({ profile }: { profile: AccountProfile | null }) {
   const { user } = useAuth();
+  const userId = user?.id;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const toast = useToast();
@@ -41,9 +37,14 @@ function AccountForm({
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [photoError, setPhotoError] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
-    profile?.avatarUrl ?? undefined,
-  );
+  const avatarUrl = useAvatarUrl(userId);
+
+  // Keep the shared photo in step with what the server says
+  useEffect(() => {
+    if (userId !== undefined && profile && profile.avatarUrl !== undefined) {
+      setAvatar(userId, profile.avatarUrl ?? null);
+    }
+  }, [profile, userId]);
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +70,7 @@ function AccountForm({
 
   async function onPhotoChosen(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    event.target.value = ""; // lets them choose the same file again later
+    event.target.value = "";
     if (!file) return;
     setPhotoError("");
     if (!PHOTO_TYPES.includes(file.type)) {
@@ -85,9 +86,8 @@ function AccountForm({
     setUploading(true);
     try {
       const result = await uploadAvatar(file);
-      setAvatarUrl(result.avatarUrl);
+      if (userId !== undefined) setAvatar(userId, result.avatarUrl);
       toast.success("Profile photo updated.");
-      onPhotoChanged?.();
     } catch (e) {
       setPhotoError(
         e instanceof Error
@@ -105,9 +105,8 @@ function AccountForm({
     setRemoving(true);
     try {
       await removeAvatar();
-      setAvatarUrl(undefined);
+      if (userId !== undefined) setAvatar(userId, null);
       toast.success("Profile photo removed.");
-      onPhotoChanged?.();
     } catch (e) {
       setPhotoError(
         e instanceof Error
@@ -225,7 +224,6 @@ function AccountSettings() {
       {resource.data && (
         <AccountForm
           profile={resource.data.profile}
-          onPhotoChanged={resource.reload}
         />
       )}
       <Panel className="danger-panel">
