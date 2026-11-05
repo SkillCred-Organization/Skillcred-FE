@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LockKeyhole, Mail, MapPin, Upload, UserRound } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -8,7 +8,7 @@ import { useToast } from "../../components/ui/toastContext";
 import { useAuth } from "../auth/authContext";
 import { settingsApi, type AccountProfile } from "../../lib/settings";
 import { trackEvent } from "../../lib/analytics";
-import { uploadAvatar } from "../../lib/avatar";
+import { removeAvatar, uploadAvatar } from "../../lib/avatar";
 import { useResource } from "../../hooks/useResource";
 import {
   ErrorNotice,
@@ -22,21 +22,29 @@ import { DataExport, PasswordSettings } from "./SettingsSections";
 import EmailNotificationSettings from "./EmailNotificationsSetting";
 import "../../workspace.css";
 import DeleteAccountModal from "./DeleteAccountModal";
+import { setAvatar, useAvatarUrl } from "../../lib/avatarStore";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_MAX_MB = 3;
 
 function AccountForm({ profile }: { profile: AccountProfile | null }) {
   const { user } = useAuth();
+  const userId = user?.id;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const toast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [photoError, setPhotoError] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
-    profile?.avatarUrl ?? undefined,
-  );
+  const avatarUrl = useAvatarUrl(userId);
+
+  // Keep the shared photo in step with what the server says
+  useEffect(() => {
+    if (userId !== undefined && profile && profile.avatarUrl !== undefined) {
+      setAvatar(userId, profile.avatarUrl ?? null);
+    }
+  }, [profile, userId]);
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,7 +70,7 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
 
   async function onPhotoChosen(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    event.target.value = ""; // lets them choose the same file again later
+    event.target.value = "";
     if (!file) return;
     setPhotoError("");
     if (!PHOTO_TYPES.includes(file.type)) {
@@ -78,7 +86,7 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
     setUploading(true);
     try {
       const result = await uploadAvatar(file);
-      setAvatarUrl(result.avatarUrl);
+      if (userId !== undefined) setAvatar(userId, result.avatarUrl);
       toast.success("Profile photo updated.");
     } catch (e) {
       setPhotoError(
@@ -91,6 +99,25 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
     }
   }
 
+  async function onRemovePhoto() {
+    if (!window.confirm("Remove your profile photo?")) return;
+    setPhotoError("");
+    setRemoving(true);
+    try {
+      await removeAvatar();
+      if (userId !== undefined) setAvatar(userId, null);
+      toast.success("Profile photo removed.");
+    } catch (e) {
+      setPhotoError(
+        e instanceof Error
+          ? e.message
+          : "Couldn't remove your photo. Please try again.",
+      );
+    } finally {
+      setRemoving(false);
+    }
+  }
+
   return (
     <Panel>
       <form onSubmit={save} className="workspace-form">
@@ -100,9 +127,16 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
             <img
               src={avatarUrl}
               alt="Your profile photo"
+              width={72}
+              height={72}
+              referrerPolicy="no-referrer"
+              onError={() => setPhotoError("The photo couldn't be displayed.")}
               style={{
                 width: 72,
                 height: 72,
+                minWidth: 72,
+                flexShrink: 0,
+                display: "block",
                 borderRadius: "50%",
                 objectFit: "cover",
               }}
@@ -122,10 +156,22 @@ function AccountForm({ profile }: { profile: AccountProfile | null }) {
             variant="outline"
             icon={<Upload size={16} />}
             loading={uploading}
+            disabled={removing}
             onClick={() => fileInput.current?.click()}
           >
-              {avatarUrl ? "Change photo" : "Upload photo"}
+            {avatarUrl ? "Change photo" : "Upload photo"}
           </Button>
+          {avatarUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              loading={removing}
+              disabled={uploading}
+              onClick={onRemovePhoto}
+            >
+              Remove photo
+            </Button>
+          )}
         </div>
         <ErrorNotice message={photoError} />
         <div className="workspace-form-columns">
@@ -175,7 +221,11 @@ function AccountSettings() {
   return (
     <>
       <ResourceState {...resource} retry={resource.reload} />
-      {resource.data && <AccountForm profile={resource.data.profile} />}
+      {resource.data && (
+        <AccountForm
+          profile={resource.data.profile}
+        />
+      )}
       <Panel className="danger-panel">
         <div>
           <h2>Delete account</h2>
@@ -196,7 +246,6 @@ function AccountSettings() {
     </>
   );
 }
-
 
 export default function SettingsPage() {
   const [params, setParams] = useSearchParams();

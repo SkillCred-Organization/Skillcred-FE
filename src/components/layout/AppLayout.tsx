@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import MobileTabBar from './MobileTabBar'
 import Sidebar from './Sidebar'
 import { useOnboardingGate } from '../../features/onboarding/useOnboardingGate'
 import { useAuth } from '../../features/auth/authContext'
 import VerifyEmailRequired from '../../features/auth/VerifyEmailRequired'
+import { settingsApi } from '../../lib/settings'
+import { setAvatar } from '../../lib/avatarStore'
+
 
 // Page names used in the "Verify your email to use ..." message
 const pageNames: Record<string, string> = {
@@ -22,6 +25,22 @@ export default function AppLayout() {
   const unverified = user?.role === 'learner' && !user.emailVerified // every learner API answers 403 until then
 
   const checking = useOnboardingGate()
+
+  const userId = user?.id
+  useEffect(() => {
+    if (userId === undefined) return
+    let cancelled = false
+    settingsApi
+      .profile()
+      .then(({ profile }) => {
+        if (!cancelled && profile && profile.avatarUrl !== undefined) setAvatar(userId, profile.avatarUrl ?? null)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
 
   if (checking) {
     return (

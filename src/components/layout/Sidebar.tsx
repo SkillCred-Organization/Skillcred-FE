@@ -1,5 +1,5 @@
 import { Award, Code, Folder, House, LogOut, PanelLeft, ShieldCheck, Share2, SlidersHorizontal, Star } from 'lucide-react'
-import Avatar from '../ui/Avatar'
+import UserAvatar from '../ui/UserAvatar'
 import { useAuth } from '../../features/auth/authContext'
 import NavItem from './NavItem'
 
@@ -54,7 +54,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </button>
 
         <div className={`mt-2 flex items-center gap-3 border-t border-line pt-3 ${collapsed ? 'justify-center' : 'px-2'}`}>
-          <Avatar initials={initials} />
+          <UserAvatar initials={initials} />
           {!collapsed && (
             <div className="min-w-0 text-sm">
               <p className="truncate font-medium text-ink">{name}</p>
