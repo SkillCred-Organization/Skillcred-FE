@@ -155,7 +155,18 @@ export default function PublicProfilePage() {
           <>
             <section className="rounded-xl border border-line bg-white p-5">
               <div className="flex items-start gap-4">
-                <Avatar initials={initials(profile.fullName)} size="lg" />
+                {profile.avatarUrl ? (
+  <img
+    src={profile.avatarUrl}
+    alt={profile.fullName}
+    width={56}
+    height={56}
+    referrerPolicy="no-referrer"
+    style={{ width: 56, height: 56, minWidth: 56, flexShrink: 0, display: 'block', borderRadius: '50%', objectFit: 'cover' }}
+  />
+) : (
+  <Avatar initials={initials(profile.fullName)} size="lg" />
+)}
                 <div className="min-w-0 flex-1">
                   <h1 className="text-xl font-semibold text-ink">{profile.fullName}</h1>
                   {profile.headline && <p className="text-sm text-ink">{profile.headline}</p>}

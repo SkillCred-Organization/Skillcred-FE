@@ -133,6 +133,7 @@ export type PublicProfile = {
   achievements: PublicItem[]
   skills: { name: string; verified: boolean }[]
   stats: { verified: number; total: number }
+  avatarUrl?: string | null
 }
 
 export type SkillItem = { name: string; verified: boolean }
