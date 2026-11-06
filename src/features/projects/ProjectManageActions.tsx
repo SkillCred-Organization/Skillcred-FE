@@ -8,6 +8,7 @@ import { deleteProject, getProject } from "../../lib/api";
 import { errorText } from "../../lib/errors";
 import type { ProjectDetail } from "../../types";
 import AddProjectModal from "./AddProjectModal";
+import { useBilling } from "../billing/useBilling";
 
 type ProjectManageActionsProps = {
   project: ProjectDetail;
@@ -22,6 +23,7 @@ export default function ProjectManageActions({
 }: ProjectManageActionsProps) {
   const navigate = useNavigate();
   const toast = useToast();
+  const { reload } = useBilling();
   const [editing, setEditing] = useState(autoOpen);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -30,6 +32,7 @@ export default function ProjectManageActions({
     setDeleting(true);
     try {
       await deleteProject(project.id);
+      void reload();
       toast.success("Project deleted.");
       navigate("/app/projects", { replace: true });
     } catch (err) {
@@ -69,6 +72,7 @@ export default function ProjectManageActions({
           project={project}
           onClose={() => setEditing(false)}
           onCreated={(saved) => {
+  void reload()
   toast.success(
     project.status === 'needs-changes'
       ? 'Changes saved. Press Request verification to send it again.'

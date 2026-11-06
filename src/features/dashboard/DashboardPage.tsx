@@ -159,7 +159,7 @@ function DashboardContent({ data, institution, onAdd, billing }: ContentProps) {
               <span className="rounded-full bg-pending-bg px-2 py-0.5 text-xs text-pending-text">Premium</span>
               <h2 className="mt-1 text-base font-semibold text-ink">Showcase more of your work</h2>
               <p className="text-sm text-ink-muted">
-                Add more than 2 projects to your profile for ₦2,499 a month. Verification works the same on every plan.
+                Pay once for lifetime Premium access and unlimited projects. Verification works the same on every plan.
               </p>
             </div>
           </div>
@@ -257,9 +257,7 @@ export default function DashboardPage() {
           {billing?.plan === 'premium' && (
             <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-pending-bg px-3 py-1 text-xs text-pending-text">
               <Star className="size-3" />
-              Premium Plan
-              {billing.paidThrough &&
-                ` · ${billing.cancelAtPeriodEnd ? 'ends' : 'renews'} ${new Date(billing.paidThrough).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+              Premium · Lifetime access
             </span>
           )}
         </div>

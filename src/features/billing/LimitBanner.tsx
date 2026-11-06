@@ -18,11 +18,11 @@ export default function LimitBanner({ billing, onDismiss }: Props) {
       <div className="flex-1">
         <h2 className="text-sm font-semibold text-ink">You've reached your Free Plan limit.</h2>
         <p className="mt-1 text-sm text-ink">
-          Upgrade to Premium to add more projects to your SkillCred profile. Your {billing.projects.used} projects stay as they are.
+          Pay once for lifetime Premium access and unlimited projects. Your {billing.projects.used} projects stay as they are.
         </p>
         {premium && (
           <p className="mt-3 text-sm text-ink-muted">
-            <span className="text-lg font-semibold text-ink">{formatNaira(premium.priceNgn)}</span> per month · paid by card
+            <span className="text-lg font-semibold text-ink">{formatNaira(premium.priceNgn)}</span> one-time payment · paid by card
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">

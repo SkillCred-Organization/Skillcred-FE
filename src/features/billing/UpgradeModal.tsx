@@ -15,7 +15,7 @@ export default function UpgradeModal({ billing, onClose }: UpgradeModalProps) {
 
   return (
     <Modal
-      title="Add more projects with Premium"
+      title="Unlimited projects with Premium"
       onClose={onClose}
       footer={
         <>
@@ -27,12 +27,12 @@ export default function UpgradeModal({ billing, onClose }: UpgradeModalProps) {
       <div className="space-y-4">
         <p className="text-sm text-ink">
           {typeof limit === 'number'
-            ? `Your Free Plan includes ${limit} projects, and you're using ${limit === 2 ? 'both' : 'all of them'}. Upgrade to Premium to add this project and more. Your existing projects stay exactly as they are.`
+            ? `Your Free Plan includes ${limit} projects, and you're using ${limit === 2 ? 'both' : 'all of them'}. Pay once for lifetime Premium access and unlimited projects. Your existing projects stay exactly as they are.`
             : 'Premium has no project limit.'}
         </p>
         {premium && (
           <p className="text-sm text-ink-muted">
-            <span className="text-2xl font-semibold text-ink">{formatNaira(premium.priceNgn)}</span> per month · paid by card
+            <span className="text-2xl font-semibold text-ink">{formatNaira(premium.priceNgn)}</span> one-time payment · lifetime access · paid by card
           </p>
         )}
         {disabled && (
