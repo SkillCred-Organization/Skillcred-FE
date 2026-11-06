@@ -14,7 +14,6 @@ async function loadPricing() {
   return { ...data, free: free!, premium: premium! }
 }
 
-const intervalLabel = (interval: string) => ({ monthly: 'month', yearly: 'year', annually: 'year' })[interval] || interval
 const limitLabel = (limit: number | null) => limit === null ? 'Unlimited projects' : `Up to ${limit} ${limit === 1 ? 'project' : 'projects'}`
 
 export default function Pricing() {
@@ -42,16 +41,16 @@ export default function Pricing() {
         </article>
         <article className="pricing-card" aria-labelledby="premium-plan-title">
           <div className="pricing-card-heading"><h3 id="premium-plan-title">{data.premium.name}</h3><span className="pricing-label"><Sparkles size={14} aria-hidden="true" />More room</span></div>
-          <p className="pricing-price">{price(data.premium.priceNgn)}<span>/ {intervalLabel(data.premium.interval)}</span></p>
-          <p className="pricing-card-description">For students with more work to show.</p>
-          <ul><li><Check aria-hidden="true" />{data.premium.projectLimit === null && data.free.projectLimit !== null ? `Add more than ${data.free.projectLimit} projects` : limitLabel(data.premium.projectLimit)}</li>
+          <p className="pricing-price">{price(data.premium.priceNgn)}<span>One-time payment</span></p>
+          <p className="pricing-card-description">Lifetime access for students with more work to show.</p>
+          <ul><li><Check aria-hidden="true" />{limitLabel(data.premium.projectLimit)}</li>
             <li><Check aria-hidden="true" />Public profile and shareable link</li><li><Check aria-hidden="true" />Project submission for institutional verification</li></ul>
           {data.billingEnabled
             ? <Link className="landing-button button-primary" to={user?.role === 'learner' ? '/app/billing' : '/login'} state={{ from: '/app/billing' }}>Explore Premium</Link>
             : <p className="pricing-unavailable" role="status">Premium upgrades aren’t available yet.</p>}
         </article>
       </div>}
-      <p className="pricing-note">Premium is paid by card through Paystack. Verification is always done by your institution, never by payment.</p>
+      <p className="pricing-note">Pay once by card through Paystack for lifetime Premium access. Verification is always done by your institution, never by payment.</p>
     </div>
   </section>
 }

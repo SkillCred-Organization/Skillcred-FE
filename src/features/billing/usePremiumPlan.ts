@@ -8,7 +8,7 @@ export function usePremiumPlan() {
     let cancelled = false
     getPlans()
       .then((r) => {
-        if (!cancelled) setPremium(r.plans.find((p) => p.projectLimit === null) ?? null)
+        if (!cancelled) setPremium(r.plans.find((p) => p.id === 'premium') ?? null)
       })
       .catch(() => {})
     return () => {

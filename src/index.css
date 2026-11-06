@@ -61,9 +61,9 @@
   --color-plum-bg: #f8e3fe; --color-plum-text: #763b88;
   --color-banner-line: #b6ec97;
 
-  --font-sans: "DM Sans";
-  --font-serif: "DM Sans";
-  --font-mono: "DM Sans";
+  --font-sans: "DM Sans", sans-serif;
+  --font-serif: "DM Sans", sans-serif;
+  --font-mono: "DM Sans", sans-serif;
 }
 
 @keyframes logo-scroll {

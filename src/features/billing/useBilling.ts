@@ -1,39 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getBilling } from '../../lib/billing'
+import { createContext, useContext } from 'react'
 import type { BillingMe } from '../../lib/billing'
-import { useAuth } from '../auth/authContext'
 
-type Status = 'loading' | 'ready' | 'error'
+export type BillingState = { billing: BillingMe | null; status: 'loading' | 'ready' | 'error' }
+export const BillingContext = createContext<(BillingState & { reload: () => Promise<void> }) | null>(null)
 
-// Loads the learner's plan and project usage. Admins are never asked (billing calls return 403 for them).
+// All learner screens share the refreshed plan and usage after a payment or project change.
 export function useBilling() {
-  const { user } = useAuth()
-  const isLearner = user?.role === 'learner'
-  const [billing, setBilling] = useState<BillingMe | null>(null)
-  const [status, setStatus] = useState<Status>('loading')
-  const [attempt, setAttempt] = useState(0)
-
-  useEffect(() => {
-    if (!isLearner) return
-    let cancelled = false
-    getBilling()
-      .then((b) => {
-        if (cancelled) return
-        setBilling(b)
-        setStatus('ready')
-      })
-      .catch(() => {
-        if (!cancelled) setStatus('error')
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [isLearner, attempt])
-
-  const reload = useCallback(() => {
-    setStatus('loading')
-    setAttempt((a) => a + 1)
-  }, [])
-
-  return { billing, status, reload }
+  const context = useContext(BillingContext)
+  if (!context) throw new Error('BillingProvider is missing')
+  return context
 }

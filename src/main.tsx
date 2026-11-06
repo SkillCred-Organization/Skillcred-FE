@@ -7,6 +7,7 @@ import AuthProvider from './features/auth/AuthProvider'
 import ToastProvider from './components/ui/ToastProvider'
 import Analytics from './components/Analytics'
 import ErrorBoundary from './components/ErrorBoundary'
+import BillingProvider from './features/billing/BillingProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -15,7 +16,7 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <ToastProvider>
           <ErrorBoundary>
-            <App />
+            <BillingProvider><App /></BillingProvider>
           </ErrorBoundary>
         </ToastProvider>
       </AuthProvider>
