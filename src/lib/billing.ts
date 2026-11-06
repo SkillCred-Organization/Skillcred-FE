@@ -4,7 +4,7 @@ export type Plan = {
   id: string
   name: string
   priceNgn: number
-  interval: string
+  interval: string | null
   projectLimit: number | null // null = unlimited
 }
 export type PlansResponse = { currency: string; billingEnabled: boolean; plans: Plan[] }
@@ -14,12 +14,15 @@ export type BillingMe = {
   plan: string
   status: string | null
   paidThrough: string | null
-  cancelAtPeriodEnd: boolean
   projects: { used: number; limit: number | null }
   canUpgrade: boolean
 }
 
-export type VerifyResult = BillingMe & { paid: boolean; paymentStatus: string }
+// Verification does not return billingEnabled or paidThrough. Refresh /me after payment.
+export type VerifyResult = Pick<BillingMe, 'plan' | 'status' | 'projects' | 'canUpgrade'> & {
+  paid: boolean
+  paymentStatus: string
+}
 
 export const getPlans = () => apiClient<PlansResponse>('/api/billing/plans', { auth: false })
 export const getBilling = () => apiClient<BillingMe>('/api/billing/me')
@@ -40,11 +43,6 @@ export async function startCheckout(): Promise<string> {
   return safeUrl(data.authorizationUrl)
 }
 
-export async function getManageLink(): Promise<string> {
-  const data = await apiClient<{ url: string }>('/api/billing/manage-link')
-  return safeUrl(data.url)
-}
-
 export const isPlanLimit = (err: unknown) =>
   err instanceof ApiError && (err.code === 'PLAN_LIMIT_REACHED' || err.status === 402)
 
@@ -57,10 +55,6 @@ export function billingErrorText(err: unknown, fallback: string) {
       return "We couldn't start your payment. Please try again."
     case 'BILLING_NOT_CONFIGURED':
       return "Payments aren't switched on yet."
-    case 'SUBSCRIPTION_PENDING':
-      return 'Your subscription is still being set up. Try again in a minute.'
-    case 'NO_SUBSCRIPTION':
-      return "You don't have a subscription to manage."
     default:
       return err instanceof ApiError && err.message ? err.message : fallback
   }

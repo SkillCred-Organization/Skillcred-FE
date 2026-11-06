@@ -5,57 +5,18 @@ import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
 import InlineAlert from '../../components/ui/InlineAlert'
 import Skeleton from '../../components/ui/Skeleton'
-import { useToast } from '../../components/ui/toastContext'
-import { billingErrorText, formatNaira, getManageLink, getPlans } from '../../lib/billing'
-import type { BillingMe, Plan } from '../../lib/billing'
-import { formatDate } from '../../lib/format'
+import { formatNaira, getPlans } from '../../lib/billing'
+import type { Plan } from '../../lib/billing'
 import { useAuth } from '../auth/authContext'
 import UpgradeButton from './UpgradeButton'
 import { useBilling } from './useBilling'
 
-type Notice = {
-  variant: 'info' | 'success' | 'warning' | 'error'
-  title: string
-  text?: string
-  action: 'upgrade' | 'manage' | 'card' | null
-}
-
-// One message per plan state, as the backend's guide describes
-function describe(me: BillingMe): Notice | null {
-  const until = me.paidThrough ? formatDate(me.paidThrough) : ''
-  const status = (me.status ?? '').toLowerCase()
-  if (me.plan === 'premium') {
-    if (me.cancelAtPeriodEnd || status === 'non-renewing' || status === 'cancelled') {
-      return { variant: 'warning', title: `Cancelled. Premium until ${until}`, action: 'manage' }
-    }
-    if (status === 'attention') {
-      return { variant: 'error', title: 'There is a problem with your card', text: 'Update your card to keep Premium.', action: 'card' }
-    }
-    return {
-      variant: 'success',
-      title: until ? `Premium. Renews on ${until}` : "You're on Premium",
-      action: me.status ? 'manage' : null,
-    }
-  }
-  if (status === 'expired') {
-    return {
-      variant: 'warning',
-      title: 'Your Premium has ended',
-      text: "Your projects are kept, but you can't add new ones.",
-      action: 'upgrade',
-    }
-  }
-  return null // Free plan: the Upgrade button on the price card is enough
-}
-
 export default function PlanPage() {
   const { user } = useAuth()
-  const toast = useToast()
   const { billing, status, reload } = useBilling()
   const [plans, setPlans] = useState<Plan[] | null>(null)
   const [plansFailed, setPlansFailed] = useState(false)
   const [plansAttempt, setPlansAttempt] = useState(0)
-  const [managing, setManaging] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -71,16 +32,6 @@ export default function PlanPage() {
     }
   }, [plansAttempt])
 
-  async function manage() {
-    setManaging(true)
-    try {
-      window.location.assign(await getManageLink())
-    } catch (err) {
-      setManaging(false)
-      toast.error(billingErrorText(err, "Couldn't open your billing page. Please try again."))
-    }
-  }
-
   if (user?.role === 'admin') {
     return (
       <div className="mx-auto max-w-4xl">
@@ -89,26 +40,22 @@ export default function PlanPage() {
     )
   }
 
-  const notice = billing ? describe(billing) : null
-  const premiumPlan = plans?.find((p) => p.projectLimit === null)
-  const freeLimit = plans?.find((p) => p.projectLimit !== null)?.projectLimit ?? 2
+  const premiumPlan = plans?.find((p) => p.id === 'premium')
+  const freePlan = plans?.find((p) => p.id === 'free')
+  const freeLimit = freePlan?.projectLimit ?? 2
   const rows: [string, string, string][] = [
-    ['Price', formatNaira(0), premiumPlan ? `${formatNaira(premiumPlan.priceNgn)} / month` : ''],
-    ['Projects', `Up to ${freeLimit}`, `More than ${freeLimit}`],
+    ['Price', freePlan ? formatNaira(freePlan.priceNgn) : '', premiumPlan ? `${formatNaira(premiumPlan.priceNgn)} once` : ''],
+    ['Projects', `Up to ${freeLimit}`, 'Unlimited'],
     ['Public profile and link', '✓', '✓'],
     ['Submit for verification', '✓', '✓ Same review'],
     ['Existing projects', 'Kept', 'Kept'],
   ]
   const benefits = [
-    `Add more than ${freeLimit} projects.`,
+    'Lifetime Premium access with unlimited projects.',
     'Keep your existing projects and public profile.',
     'Share your profile with employers.',
     'Submit projects for institutional verification under the same review process.',
   ]
-  const renewDate = billing?.paidThrough ? formatDate(billing.paidThrough) : ''
-  const ending = billing
-    ? billing.cancelAtPeriodEnd || ['non-renewing', 'cancelled'].includes((billing.status ?? '').toLowerCase())
-    : false
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -119,7 +66,7 @@ export default function PlanPage() {
         </span>
         <h1 className="mt-3 text-2xl font-semibold text-ink">Showcase more of your work.</h1>
         <p className="text-sm text-ink-muted">
-          Upgrade your SkillCred account to add more than two projects and showcase a broader range of your skills and experience.
+          Pay once for lifetime Premium access and unlimited projects to showcase your skills and experience.
         </p>
       </header>
 
@@ -151,24 +98,14 @@ export default function PlanPage() {
         <div className="space-y-4">
           {!billing.billingEnabled && (
             <InlineAlert variant="info" title="Payments aren't switched on yet">
-              Premium is coming soon. You can keep using the Free plan.
+              Upgrades are unavailable right now. You can keep using your current plan.
             </InlineAlert>
           )}
 
-          {notice && (
-            <div className="space-y-3">
-              <InlineAlert variant={notice.variant} title={notice.title}>
-                {notice.text}
-              </InlineAlert>
-              <div className="flex gap-2">
-                {notice.action === 'upgrade' && billing.billingEnabled && <UpgradeButton size="sm" label="Upgrade" />}
-                {(notice.action === 'manage' || notice.action === 'card') && (
-                  <Button size="sm" variant="outline" loading={managing} onClick={manage}>
-                    {notice.action === 'card' ? 'Update card' : 'Manage subscription'}
-                  </Button>
-                )}
-              </div>
-            </div>
+          {billing.plan === 'premium' && (
+            <InlineAlert variant="success" title="Your lifetime Premium is active">
+              You have unlimited projects with no recurring charges.
+            </InlineAlert>
           )}
 
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_20rem] lg:items-start">
@@ -215,21 +152,17 @@ export default function PlanPage() {
                 <p className="text-sm text-ink">Premium</p>
                 <p className="mt-2 text-3xl font-semibold text-ink">
                   {premiumPlan ? formatNaira(premiumPlan.priceNgn) : ''}
-                  <span className="text-base font-normal text-ink-muted"> / month</span>
+                  <span className="mt-1 block text-base font-normal text-ink-muted">One-time payment · Lifetime access</span>
                 </p>
                 <p className="mt-2 text-sm text-ink-muted">
-                  Paid by card on Paystack. Renews automatically every month. Cancel anytime.
+                  Pay once by card through Paystack. No recurring charges.
                 </p>
                 {billing.plan === 'premium' ? (
                   <div className="mt-4 space-y-2">
                     <p className="rounded-full bg-verified-bg px-3 py-2.5 text-center text-sm font-medium text-verified-text">
                       Your plan
                     </p>
-                    {renewDate && (
-                      <p className="text-center text-sm text-ink">
-                        Your Premium {ending ? 'ends' : 'renews'} on {renewDate}.
-                      </p>
-                    )}
+                    <p className="text-center text-sm text-ink">Lifetime access is active.</p>
                   </div>
                 ) : (
                   billing.canUpgrade &&

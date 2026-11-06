@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test'
 
 const plans = {
   currency: 'NGN', billingEnabled: true,
-  plans: [{ id: 'free', name: 'Free', priceNgn: 0, interval: 'month', projectLimit: 3 },
-    { id: 'premium', name: 'Premium', priceNgn: 4999, interval: 'month', projectLimit: null }],
+  plans: [{ id: 'free', name: 'Free', priceNgn: 0, interval: null, projectLimit: 3 },
+    { id: 'premium', name: 'Premium', priceNgn: 4999, interval: 'one-time', projectLimit: null }],
 }
 
 test.beforeEach(async ({ page }) => {
@@ -22,8 +22,13 @@ for (const width of [375, 1024, 1440]) {
     const section = page.getByRole('region', { name: 'Start free. Upgrade when you need more room.' })
     await expect(section.getByText('₦4,999', { exact: false })).toBeVisible()
     await expect(section.getByText('Up to 3 projects', { exact: true })).toBeVisible()
-    await expect(section.getByText('Add more than 3 projects', { exact: true })).toBeVisible()
-    await expect(section).not.toContainText(/bank transfer|Transfers are matched automatically/)
+    await expect(section.getByText('Unlimited projects', { exact: true })).toBeVisible()
+    await expect(section.getByText('One-time payment', { exact: true })).toBeVisible()
+    await expect(section).toContainText('Lifetime access')
+    await expect(section).not.toContainText(/bank transfer|Transfers are matched automatically|month|renews|subscription/i)
+    await page.evaluate(() => document.fonts.ready)
+    expect(await section.evaluate(element => getComputedStyle(element).fontFamily)).toContain('DM Sans')
+    expect(await page.evaluate(() => document.fonts.check('600 30px "DM Sans"'))).toBe(true)
     expect(authorizations.length).toBeGreaterThan(0)
     expect(authorizations.every(value => value === undefined)).toBe(true)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)

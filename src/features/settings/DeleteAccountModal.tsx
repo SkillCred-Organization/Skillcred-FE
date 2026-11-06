@@ -6,7 +6,6 @@ import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import { ApiError, tokenStore } from '../../lib/apiClient'
 import { confirmDelete, requestDeleteCode } from '../../lib/account'
-import { getManageLink } from '../../lib/billing'
 
 type Step = 'warn' | 'code'
 
@@ -18,7 +17,6 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [needsCancel, setNeedsCancel] = useState(false)
   const [cooldown, setCooldown] = useState(0)
 
   useEffect(() => {
@@ -35,8 +33,7 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
     const details = err.details ?? {}
     switch (err.code) {
       case 'CANCEL_SUBSCRIPTION_FIRST':
-        setNeedsCancel(true)
-        setError('Cancel your Premium first. Your subscription would keep renewing after your account is gone.')
+        setError('Your account could not be deleted. Please contact support for help with your billing record.')
         break
       case 'CODE_RECENTLY_SENT': {
         const wait = toNumber(details.retryAfterSeconds)
@@ -81,7 +78,6 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
   async function sendCode() {
     setBusy(true)
     setError('')
-    setNeedsCancel(false)
     try {
       const result = await requestDeleteCode()
       setEmail(result.email)
@@ -109,14 +105,6 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
     } catch (err) {
       handleError(err)
       setBusy(false)
-    }
-  }
-
-  async function manage() {
-    try {
-      window.location.assign(await getManageLink())
-    } catch {
-      setError("Couldn't open your billing page. Please try again.")
     }
   }
 
@@ -148,8 +136,6 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
           <InlineAlert
             variant="error"
             title={error}
-            actionLabel={needsCancel ? 'Manage subscription' : undefined}
-            onAction={needsCancel ? manage : undefined}
           />
         )}
 

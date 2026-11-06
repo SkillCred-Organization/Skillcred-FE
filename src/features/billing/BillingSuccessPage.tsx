@@ -5,11 +5,9 @@ import { Check, Clock, ShieldCheck, TriangleAlert } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { ApiError } from '../../lib/apiClient'
-import { formatNaira, verifyPayment } from '../../lib/billing'
-import type { VerifyResult } from '../../lib/billing'
-import { formatDate } from '../../lib/format'
+import { verifyPayment } from '../../lib/billing'
 import UpgradeButton from './UpgradeButton'
-import { usePremiumPlan } from './usePremiumPlan'
+import { useBilling } from './useBilling'
 
 type Phase = 'checking' | 'waiting' | 'paid' | 'failed' | 'timeout' | 'missing' | 'error'
 
@@ -21,18 +19,20 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="py-3">
       <dt className="text-xs text-ink-muted">{label}</dt>
       <dd className="mt-0.5 break-all text-base text-ink">{value}</dd>
-      <p className="mt-3 text-sm text-ink-muted">Renews automatically every month. Cancel anytime.</p>
     </div>
   )
 }
 
 export default function BillingSuccessPage() {
   const [params] = useSearchParams()
-  const reference = params.get('reference') ?? params.get('trxref') ?? ''
+  const reference = params.get('reference') || params.get('trxref') || ''
+  return <PaymentConfirmation key={reference} reference={reference} />
+}
+
+function PaymentConfirmation({ reference }: { reference: string }) {
   const [phase, setPhase] = useState<Phase>('checking')
   const [attempt, setAttempt] = useState(0)
-  const [result, setResult] = useState<VerifyResult | null>(null)
-  const { premium } = usePremiumPlan()
+  const { reload } = useBilling()
 
   useEffect(() => {
     if (!reference) return
@@ -44,8 +44,9 @@ export default function BillingSuccessPage() {
       try {
         const res = await verifyPayment(reference)
         if (cancelled) return
-        if (res.paid) {
-          setResult(res)
+        if (res.paid === true) {
+          // /verify is partial. Refresh the shared /me state, including project usage.
+          void reload()
           setPhase('paid')
           return
         }
@@ -71,11 +72,9 @@ export default function BillingSuccessPage() {
       cancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [reference, attempt])
+  }, [reference, attempt, reload])
 
   const current: Phase = reference ? phase : 'missing'
-  const price = premium ? formatNaira(premium.priceNgn) : ''
-  const until = result?.paidThrough ? formatDate(result.paidThrough) : ''
 
   const retry = (
     <Button
@@ -97,7 +96,7 @@ export default function BillingSuccessPage() {
     checking: {
       icon: Clock,
       tone: 'bg-pending-bg text-pending-text',
-      title: 'Confirming your payment…',
+      title: 'Verifying your payment…',
       text: 'This usually takes a few seconds. Please keep this page open.',
       actions: null,
     },
@@ -112,14 +111,13 @@ export default function BillingSuccessPage() {
       icon: Check,
       tone: 'bg-verified-bg text-verified-text',
       title: "You're on Premium",
-      text: `We received your ${price} payment.${until ? ` Premium is active until ${until}, and you can now add more than 2 projects.` : ' You can now add more than 2 projects.'}`,
+      text: 'Your payment is confirmed. You now have lifetime Premium access and unlimited projects.',
       body: (
         <>
           <dl className="mt-5 divide-y divide-line border-t border-line">
-            <Row label="Plan" value="Premium · monthly" />
-            {price && <Row label="Amount paid" value={price} />}
+            <Row label="Plan" value="Premium · Lifetime access" />
+            <Row label="Payment" value="One-time payment" />
             <Row label="Reference" value={reference} />
-            {until && <Row label="Renews" value={until} />}
           </dl>
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-pending-bg p-3 text-sm text-ink">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-pending-text" />
@@ -142,7 +140,7 @@ export default function BillingSuccessPage() {
       icon: TriangleAlert,
       tone: 'bg-changes-bg text-changes-text',
       title: "Your payment didn't go through",
-      text: 'You have not been charged, and you are still on the Free plan.',
+      text: 'Your payment was not confirmed. You can try again when you are ready.',
       actions: <UpgradeButton label="Try again" />,
     },
     timeout: {

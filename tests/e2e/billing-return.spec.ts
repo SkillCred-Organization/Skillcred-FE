@@ -3,7 +3,7 @@ import { mockBackend } from './fixtures'
 
 const reference = 'test/payment&receipt'
 const callback = `/billing/success?reference=${encodeURIComponent(reference)}&trxref=paystack-test`
-const premium = { billingEnabled: true, plan: 'premium', status: 'active', paidThrough: '2026-12-01T00:00:00Z', cancelAtPeriodEnd: false, projects: { used: 2, limit: null }, canUpgrade: false }
+const premium = { billingEnabled: true, plan: 'premium', status: 'active', paidThrough: '2099-12-31T00:00:00Z', projects: { used: 2, limit: null }, canUpgrade: false }
 
 test.beforeEach(async ({ page }) => {
   await page.route(/https:\/\/.*(?:googletagmanager\.com|clarity\.ms)\//, route => route.abort())
@@ -15,11 +15,12 @@ async function mockBilling(page: Page) {
     const request = route.request(), url = new URL(request.url())
     if (url.pathname === '/api/billing/plans') return route.fulfill({ json: {
       currency: 'NGN', billingEnabled: true,
-      plans: [{ id: 'free', name: 'Free', priceNgn: 0, interval: 'month', projectLimit: 2 }, { id: 'premium', name: 'Premium', priceNgn: 2499, interval: 'month', projectLimit: null }],
+      plans: [{ id: 'free', name: 'Free', priceNgn: 0, interval: null, projectLimit: 2 }, { id: 'premium', name: 'Premium', priceNgn: 2499, interval: 'one-time', projectLimit: null }],
     } })
+    if (url.pathname === '/api/billing/me') return route.fulfill({ json: premium })
     if (url.pathname === '/api/billing/verify') {
       verificationRequests.push({ reference: url.searchParams.get('reference'), authorization: request.headers().authorization })
-      return route.fulfill({ json: { ...premium, paid: true, paymentStatus: 'success' } })
+      return route.fulfill({ json: { plan: 'premium', status: 'active', projects: premium.projects, canUpgrade: false, paid: true, paymentStatus: 'success' } })
     }
     return route.fulfill({ status: 404, json: { message: 'Unexpected billing endpoint' } })
   })
@@ -31,6 +32,10 @@ async function expectStandalone(page: Page) {
   await expect(page.locator('.auth-header')).toBeVisible()
   await expect(page.getByRole('complementary')).toHaveCount(0)
   await expect(page.getByRole('navigation')).toHaveCount(0)
+  await expect(page.getByRole('status')).toContainText('lifetime Premium access and unlimited projects')
+  await expect(page.getByRole('status')).not.toContainText(/monthly|renews|2099|amount paid/i)
+  await page.evaluate(() => document.fonts.ready)
+  expect(await page.getByRole('heading', { level: 1 }).evaluate(element => getComputedStyle(element).fontFamily)).toContain('DM Sans')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 }
 
